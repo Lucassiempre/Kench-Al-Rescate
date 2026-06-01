@@ -4,13 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kench al Rescate</title>
+  <link rel="icon" type="image/png" sizes="256x256" href="favicon-kench.png?v=3">
+  <link rel="apple-touch-icon" sizes="256x256" href="favicon-kench.png?v=3">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
     :root {
       --color-primario: #f57c00;
       --color-oscuro: #1e3a5f;
       --color-fondo: #f8f6f2;
+      --color-claro-marca: #f8f6f2;
       --color-card: #ffffff;
       --color-texto: #1e3a5f;
       --color-muted: #6b7280;
@@ -24,54 +28,131 @@
       --sombra-soft: 0 4px 12px rgba(30, 58, 95, 0.06);
     }
 
+    body.dark-mode {
+      --color-oscuro: #f8f6f2;
+      --color-fondo: #111827;
+      --color-card: #172033;
+      --color-texto: #f8f6f2;
+      --color-muted: #b8c0cc;
+      --color-borde: rgba(248, 246, 242, 0.12);
+      --color-borde-fuerte: rgba(248, 246, 242, 0.22);
+      --color-suave: rgba(245, 124, 0, 0.14);
+      --sombra-card: 0 8px 22px rgba(0, 0, 0, 0.22);
+      --sombra-soft: 0 4px 12px rgba(0, 0, 0, 0.16);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html { scroll-behavior: smooth; }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(245, 124, 0, 0.78) rgba(30, 58, 95, 0.08);
+    }
+
+    *::-webkit-scrollbar {
+      width: 11px;
+      height: 11px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: rgba(30, 58, 95, 0.08);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #ff9a2f, var(--color-primario));
+      border: 3px solid rgba(248, 246, 242, 0.9);
+      border-radius: 999px;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #ffad55, #e96f00);
+    }
+
+    body.dark-mode * {
+      scrollbar-color: rgba(245, 124, 0, 0.88) #0f172a;
+    }
+
+    body.dark-mode *::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+
+    body.dark-mode *::-webkit-scrollbar-thumb {
+      border-color: #111827;
+      background: linear-gradient(180deg, #ffad55, var(--color-primario));
+    }
 
     body {
       font-family: var(--fuente-cuerpo);
       background: var(--color-fondo);
       color: var(--color-texto);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     header {
       background: rgba(255,255,255,0.92);
       border-bottom: 1px solid var(--color-borde);
       padding: 0 1.5rem;
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
-      height: 68px;
+      gap: 2rem;
+      min-height: 150px;
       position: sticky;
       top: 0;
       z-index: 100;
       backdrop-filter: blur(10px);
     }
 
+    body.dark-mode header {
+      background: rgba(17, 24, 39, 0.94);
+      border-bottom-color: rgba(248, 246, 242, 0.2);
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+    }
+
+    body.dark-mode.account-page header {
+      border-bottom-color: rgba(248, 246, 242, 0.24);
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+    }
+
     .logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
+    }
+
+    .logo-img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(30, 58, 95, 0.16));
     }
 
     .logo-texto {
       font-family: var(--fuente-titulo);
-      font-size: 1.25rem;
+      font-size: clamp(1.7rem, 2.2vw, 2.25rem);
       font-weight: 800;
       color: var(--color-texto);
       letter-spacing: -0.02em;
     }
     .logo-texto span { color: var(--color-primario); }
 
+    body.dark-mode .logo-texto {
+      color: #f8f6f2;
+    }
+
     .nav-links {
       display: flex;
-      gap: 1.5rem;
+      gap: 1.35rem;
       list-style: none;
       align-items: center;
+      justify-content: flex-end;
     }
     .nav-links a {
-      font-size: 14px;
+      font-size: 16px;
+      font-weight: 700;
       color: var(--color-muted);
       text-decoration: none;
       transition: color .15s ease, transform .15s ease;
@@ -81,11 +162,84 @@
       transform: translateY(-1px);
     }
 
+    body.dark-mode .nav-links a {
+      color: #d7deea;
+    }
+
+    body.dark-mode .nav-links a:hover {
+      color: var(--color-primario);
+    }
+
+    .theme-toggle,
+    .music-toggle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--color-borde-fuerte);
+      background: var(--color-card);
+      color: var(--color-texto);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .theme-toggle:hover,
+    .music-toggle:hover {
+      transform: translateY(-1px);
+      border-color: rgba(245, 124, 0, 0.38);
+    }
+
+    body.dark-mode .theme-toggle,
+    body.dark-mode .music-toggle {
+      background: #0f172a;
+      color: #f8f6f2;
+      border-color: rgba(248, 246, 242, 0.24);
+    }
+
+    .music-toggle.is-playing {
+      background: var(--color-primario);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 6px 14px rgba(245, 124, 0, 0.22);
+    }
+
+    .music-toggle svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .hero {
       padding: 3rem 1.5rem 2.5rem;
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
       border-bottom: 2px solid rgba(30, 58, 95, 0.1);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    .hero-content {
+      min-width: 0;
+    }
+
+    .hero-logo {
+      width: min(300px, 100%);
+      justify-self: end;
+      align-self: center;
+      filter: drop-shadow(0 16px 28px rgba(30, 58, 95, 0.16));
+    }
+
+    body.dark-mode .hero-logo,
+    body.dark-mode .logo-img {
+      filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.34));
     }
 
     .badge {
@@ -121,7 +275,10 @@
       margin-bottom: 1.8rem;
     }
 
+    .hero-content p + p { display: none; }
+
     .hero-btns { display: flex; flex-wrap: wrap; gap: 12px; }
+
 
     .btn-primary,
     .btn-secondary {
@@ -165,11 +322,21 @@
       border-bottom: 1px solid var(--color-borde);
     }
 
+    body.dark-mode .stats {
+      background: rgba(248, 246, 242, 0.12);
+      border-top-color: rgba(248, 246, 242, 0.12);
+      border-bottom-color: rgba(248, 246, 242, 0.12);
+    }
+
     .stat {
       background: rgba(255,255,255,0.72);
       backdrop-filter: blur(6px);
       padding: 1.6rem 1rem;
       text-align: center;
+    }
+
+    body.dark-mode .stat {
+      background: #151f31;
     }
     .stat-n {
       font-family: var(--fuente-titulo);
@@ -184,10 +351,155 @@
       margin-top: 4px;
     }
 
+    body.dark-mode .stat-l {
+      color: #d7deea;
+    }
+
     .main {
       max-width: 900px;
       margin: 0 auto;
       padding: 0 1.5rem 3rem;
+    }
+
+    body.admin-page .main {
+      max-width: 1320px;
+    }
+
+    body.account-page .hero,
+    body.account-page .stats,
+    body.account-page .how-work,
+    body.account-page .tabs {
+      display: none;
+    }
+
+    body.admin-page .hero,
+    body.admin-page .stats,
+    body.admin-page .how-work,
+    body.admin-page .tabs {
+      display: none;
+    }
+
+    .how-work {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem .5rem;
+    }
+
+    .how-title {
+      font-family: var(--fuente-titulo);
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: .45rem;
+      color: var(--color-texto);
+    }
+
+    .how-copy {
+      color: var(--color-muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      max-width: 760px;
+    }
+
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .process-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-borde);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: var(--sombra-soft);
+      min-height: 110px;
+    }
+
+    .process-number {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-primario);
+      color: #fff;
+      font-weight: 800;
+      margin-bottom: .7rem;
+    }
+
+    .process-name {
+      font-weight: 800;
+      color: var(--color-texto);
+      margin-bottom: .35rem;
+      font-size: 14px;
+    }
+
+    .process-desc {
+      color: var(--color-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    body.dark-mode .process-card {
+      background: #172033;
+      border-color: rgba(248, 246, 242, 0.12);
+    }
+
+    .trust-hours {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .trust-card,
+    .hours-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-borde);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: var(--sombra-soft);
+    }
+
+    .trust-card h3,
+    .hours-card h3 {
+      font-family: var(--fuente-titulo);
+      color: var(--color-texto);
+      font-size: 1rem;
+      margin-bottom: .75rem;
+    }
+
+    .trust-list,
+    .hours-list {
+      display: grid;
+      gap: 8px;
+      color: var(--color-muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .trust-list span {
+      color: var(--color-primario);
+      font-weight: 800;
+      margin-right: 6px;
+    }
+
+    body.dark-mode .trust-card,
+    body.dark-mode .hours-card {
+      background: #172033;
+      border-color: rgba(248, 246, 242, 0.12);
+    }
+
+    body.account-page .main {
+      width: min(1180px, 100%);
+      max-width: 1180px;
+      padding-top: 2rem;
+    }
+
+    body.account-page .section-title {
+      display: none;
     }
 
     .tabs {
@@ -239,6 +551,26 @@
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
       gap: 12px;
       margin-bottom: 2rem;
+    }
+
+    .repair-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .repair-services .services-grid {
+      grid-template-columns: repeat(2, minmax(130px, 1fr));
+      margin-bottom: 0;
+    }
+
+    .repair-form-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      padding: 1.25rem;
+      box-shadow: var(--sombra-soft);
     }
 
     .service-card {
@@ -362,10 +694,161 @@
       fill: none;
       stroke-width: 1.5;
     }
+    .product-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      padding: 8px;
+    }
     .product-info { padding: .75rem; }
     .product-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
     .product-price { font-size: 14px; font-weight: 800; color: var(--color-primario); }
     .product-status { margin-top: 6px; }
+
+    .product-detail-modal {
+      width: min(1180px, 100%);
+    }
+
+    .product-detail-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 1.2fr) minmax(260px, .8fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .product-detail-media {
+      min-height: 360px;
+      border: 1px solid var(--color-borde);
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .product-detail-media img {
+      width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .product-detail-media svg {
+      width: min(220px, 60%);
+      height: auto;
+      stroke: var(--color-primario);
+      fill: none;
+    }
+
+    .product-detail-title {
+      font-family: var(--fuente-titulo);
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: .8rem;
+    }
+
+    .product-detail-price {
+      font-family: var(--fuente-titulo);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      color: var(--color-primario);
+      font-weight: 900;
+      margin-bottom: .35rem;
+    }
+
+    .product-benefits {
+      display: grid;
+      gap: 8px;
+      margin: 1rem 0;
+    }
+
+    .product-benefit {
+      padding: .75rem;
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      color: var(--color-muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .product-benefit strong {
+      display: block;
+      color: var(--color-texto);
+    }
+
+    .product-specs {
+      margin-top: 18px;
+      border: 1px solid var(--color-borde);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .product-specs-title {
+      padding: .85rem 1rem;
+      background: rgba(245,124,0,.12);
+      color: var(--color-primario);
+      font-weight: 900;
+      font-size: 13px;
+      border-bottom: 1px solid var(--color-borde);
+    }
+
+    .product-specs-body {
+      padding: 1rem;
+      color: var(--color-muted);
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    .related-products {
+      margin-top: 20px;
+    }
+
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .related-product {
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      padding: .7rem;
+      cursor: pointer;
+      background: rgba(255,255,255,.72);
+    }
+
+    body.dark-mode .related-product {
+      background: #172238;
+      border-color: rgba(248, 246, 242, 0.14);
+    }
+
+    .related-thumb {
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(245,124,0,.08);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .related-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .related-thumb svg {
+      width: 36px;
+      height: 36px;
+      stroke: var(--color-primario);
+      fill: none;
+    }
 
     .sell-note {
       background: var(--color-suave);
@@ -386,8 +869,29 @@
       font-weight: 700;
     }
     .pill-green { background: rgba(63,153,57,.12); color: #2a7a26; }
-    .pill-amber { background: rgba(186,117,23,.12); color: #7a4e0a; }
+    .pill-amber { background: rgba(245,158,11,.16); color: #b45309; }
     .pill-red   { background: rgba(220,38,38,.12); color: #b91c1c; }
+
+    body.dark-mode .pill-red,
+    body.dark-mode .status-btn.red {
+      background: rgba(220,38,38,.14);
+      border: 1px solid rgba(220,38,38,.36);
+      color: #ff6b6b;
+    }
+
+    body.dark-mode .pill-amber,
+    body.dark-mode .status-btn.amber {
+      background: rgba(251,191,36,.2);
+      border: 1px solid rgba(251,191,36,.48);
+      color: #ffd166;
+    }
+
+    body.dark-mode .pill-green,
+    body.dark-mode .status-btn.green {
+      background: rgba(34,197,94,.16);
+      border: 1px solid rgba(34,197,94,.38);
+      color: #4ade80;
+    }
 
     .track-card {
       background: var(--color-card);
@@ -415,6 +919,893 @@
     .step-dot.pend  { background: var(--color-borde); }
     .step-text { font-size: 13px; }
     .step-date { font-size: 11px; color: var(--color-muted); margin-left: auto; }
+
+    .auth-shell,
+    .admin-shell {
+      display: grid;
+      gap: 14px;
+    }
+
+    .account-dashboard {
+      display: none;
+      grid-template-columns: 270px minmax(0, 1fr);
+      gap: 32px;
+      align-items: start;
+    }
+
+    .account-dashboard.show { display: grid; }
+
+    .account-menu {
+      display: grid;
+      gap: 10px;
+      background: #11161d;
+      border: 1px solid rgba(248, 246, 242, 0.1);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 18px 36px rgba(0,0,0,.2);
+    }
+
+    .account-menu button {
+      width: 100%;
+      justify-content: flex-start;
+      text-align: left;
+      min-height: 46px;
+      border-radius: 10px;
+      background: #172033;
+      border: 1px solid rgba(248, 246, 242, 0.1);
+      color: #f8f6f2;
+      padding: 0 14px;
+      font-size: 14px;
+      box-shadow: none;
+    }
+
+    .account-menu button:hover,
+    .account-menu button.active {
+      background: #1e3a5f;
+      border-color: rgba(245, 124, 0, 0.45);
+      color: #fff;
+    }
+
+    body.account-page .account-menu .status-btn,
+    body.dark-mode.account-page .account-menu .status-btn {
+      background: #172033;
+      border: 1px solid rgba(248, 246, 242, 0.1);
+      color: #f8f6f2;
+    }
+
+    body.account-page .account-menu .status-btn:hover,
+    body.account-page .account-menu .status-btn.active,
+    body.dark-mode.account-page .account-menu .status-btn:hover,
+    body.dark-mode.account-page .account-menu .status-btn.active {
+      background: #1e3a5f;
+      border-color: rgba(248, 246, 242, 0.18);
+      color: #fff;
+    }
+
+    body.account-page .account-menu .status-btn.danger,
+    body.dark-mode.account-page .account-menu .status-btn.danger {
+      color: #ffb4b4;
+      border-color: rgba(220, 38, 38, 0.42);
+      background: rgba(220, 38, 38, 0.08);
+    }
+
+    body.account-page .account-menu .status-btn.danger:hover,
+    body.account-page .account-menu .status-btn.danger.active,
+    body.dark-mode.account-page .account-menu .status-btn.danger:hover,
+    body.dark-mode.account-page .account-menu .status-btn.danger.active {
+      color: #ffd1d1;
+      border-color: rgba(220, 38, 38, 0.65);
+      background: rgba(220, 38, 38, 0.18);
+    }
+
+    .account-panel { display: none; }
+    .account-panel.show { display: block; }
+
+    .account-card {
+      background: #172033;
+      border: 1px solid rgba(248, 246, 242, 0.14);
+      border-top: 4px solid var(--color-primario);
+      border-radius: 14px;
+      padding: 2rem;
+      box-shadow: 0 18px 44px rgba(0,0,0,.22);
+    }
+
+    .account-title {
+      font-family: var(--fuente-titulo);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      margin-bottom: 1.35rem;
+      color: #fff;
+    }
+
+    .account-subtitle {
+      font-family: var(--fuente-titulo);
+      font-size: clamp(1.55rem, 3vw, 2.25rem);
+      font-weight: 800;
+      margin: 1.4rem 0 1rem;
+      color: #fff;
+    }
+
+    .account-title::after,
+    .account-subtitle::after {
+      content: "";
+      display: block;
+      width: 58px;
+      height: 3px;
+      background: var(--color-primario);
+      border-radius: 999px;
+      margin-top: 8px;
+    }
+
+    .account-card .form-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px 22px;
+    }
+
+    .account-card .form-group.wide { grid-column: span 2; }
+    .account-card .form-group.full { grid-column: 1 / -1; }
+
+    .account-card .form-group label {
+      color: #d7deea;
+      font-size: 14px;
+    }
+
+    .account-card .form-group input,
+    .account-card .form-group select {
+      background: #111827;
+      border-color: rgba(248, 246, 242, 0.16);
+      color: #f8f6f2;
+      min-height: 46px;
+    }
+
+    .account-card .submit-row .btn-primary {
+      width: 100%;
+      min-height: 48px;
+      text-transform: uppercase;
+    }
+
+    .faq-section {
+      display: none;
+      margin-top: 2.5rem;
+    }
+
+    .faq-section.show {
+      display: block;
+    }
+
+    .faq-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .faq-heading h2 {
+      font-family: var(--fuente-titulo);
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      color: var(--color-texto);
+      margin-bottom: .25rem;
+    }
+
+    .faq-heading p {
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+
+    .faq-layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      border: 1px solid var(--color-borde);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--color-card);
+      box-shadow: var(--sombra-card);
+    }
+
+    .faq-menu {
+      display: grid;
+      align-content: start;
+      gap: 6px;
+      padding: 16px;
+      border-right: 1px solid var(--color-borde);
+      background: #ffffff;
+    }
+
+    .faq-menu button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 44px;
+      border: 1px solid rgba(30, 58, 95, 0.12);
+      border-radius: 10px;
+      background: #f4f7fb;
+      color: #1e3a5f;
+      font-family: var(--fuente-cuerpo);
+      font-weight: 800;
+      text-align: left;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    .faq-menu button.active,
+    .faq-menu button:hover {
+      background: var(--color-primario);
+      border-color: var(--color-primario);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(245, 124, 0, 0.18);
+    }
+
+    .faq-menu button.active .faq-count,
+    .faq-menu button:hover .faq-count {
+      background: #1e3a5f;
+      color: #fff;
+    }
+
+    .faq-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #1e3a5f;
+      color: #fff;
+      font-size: 12px;
+      padding: 0 7px;
+    }
+
+    .faq-content {
+      padding: 18px 22px 24px;
+    }
+
+    .faq-current {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--fuente-titulo);
+      font-weight: 800;
+      color: var(--color-texto);
+      margin-bottom: 16px;
+      font-size: 1.05rem;
+    }
+
+    .faq-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.56);
+    }
+
+    .faq-question {
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      background: transparent;
+      color: var(--color-texto);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0 14px;
+      font-family: var(--fuente-cuerpo);
+      font-weight: 800;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .faq-plus {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1px solid var(--color-borde-fuerte);
+      color: var(--color-primario);
+      flex-shrink: 0;
+    }
+
+    .faq-answer {
+      display: none;
+      border-top: 1px solid var(--color-borde);
+      padding: 12px 14px 16px;
+      color: var(--color-muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+
+    .faq-item.open .faq-plus {
+      background: var(--color-primario);
+      border-color: var(--color-primario);
+      color: #fff;
+    }
+
+    .account-card .panel-title {
+      color: #fff;
+      font-size: 1.35rem;
+    }
+
+    .account-card .panel-copy,
+    .account-card .mini-muted,
+    .account-card .data-meta {
+      color: #d7deea;
+    }
+
+    .account-card .data-item {
+      background: #111827;
+      border-color: rgba(248, 246, 242, 0.12);
+    }
+
+    .account-card .data-head,
+    .account-card .data-head span {
+      color: #fff;
+    }
+
+    body.account-page .form-group input:disabled,
+    body.account-page .form-group select:disabled {
+      opacity: 1;
+      color: #cbd5e1;
+      background: #202838;
+    }
+
+    body.account-page:not(.dark-mode) .account-menu {
+      background: #ffffff;
+      border-color: rgba(30, 58, 95, 0.12);
+      box-shadow: 0 16px 32px rgba(30, 58, 95, 0.12);
+    }
+
+    body.account-page:not(.dark-mode) .account-menu .status-btn {
+      background: #f4f7fb;
+      border-color: rgba(30, 58, 95, 0.12);
+      color: #1e3a5f;
+    }
+
+    body.account-page:not(.dark-mode) .account-menu .status-btn:hover,
+    body.account-page:not(.dark-mode) .account-menu .status-btn.active {
+      background: var(--color-primario);
+      border-color: var(--color-primario);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(245, 124, 0, 0.22);
+    }
+
+    body.account-page:not(.dark-mode) .account-menu .status-btn.danger {
+      color: #b91c1c;
+      border-color: rgba(220, 38, 38, 0.32);
+      background: rgba(220, 38, 38, 0.06);
+    }
+
+    body.account-page:not(.dark-mode) .account-menu .status-btn.danger:hover,
+    body.account-page:not(.dark-mode) .account-menu .status-btn.danger.active {
+      background: rgba(220, 38, 38, 0.1);
+      border-color: rgba(220, 38, 38, 0.52);
+      color: #b91c1c;
+      box-shadow: 0 8px 18px rgba(220, 38, 38, 0.12);
+    }
+
+    body.account-page:not(.dark-mode) .account-card {
+      background: #ffffff;
+      border-color: rgba(30, 58, 95, 0.12);
+      box-shadow: 0 18px 44px rgba(30, 58, 95, 0.12);
+    }
+
+    body.account-page:not(.dark-mode) .account-title,
+    body.account-page:not(.dark-mode) .account-subtitle,
+    body.account-page:not(.dark-mode) .account-card .panel-title,
+    body.account-page:not(.dark-mode) .account-card .data-head,
+    body.account-page:not(.dark-mode) .account-card .data-head span {
+      color: #1e3a5f;
+    }
+
+    body.account-page:not(.dark-mode) .account-card .form-group label {
+      color: #1e3a5f;
+    }
+
+    body.account-page:not(.dark-mode) .account-card .form-group input,
+    body.account-page:not(.dark-mode) .account-card .form-group select {
+      background: #f8fafc;
+      border-color: rgba(30, 58, 95, 0.18);
+      color: #1e3a5f;
+    }
+
+    body.account-page:not(.dark-mode) .form-group input:disabled,
+    body.account-page:not(.dark-mode) .form-group select:disabled {
+      background: #edf2f7;
+      color: #50627a;
+    }
+
+    body.account-page:not(.dark-mode) .account-card .panel-copy,
+    body.account-page:not(.dark-mode) .account-card .mini-muted,
+    body.account-page:not(.dark-mode) .account-card .data-meta {
+      color: #64748b;
+    }
+
+    body.account-page:not(.dark-mode) .account-card .data-item {
+      background: #f8fafc;
+      border-color: rgba(30, 58, 95, 0.12);
+    }
+
+    body.dark-mode.account-page .faq-heading h2,
+    body.dark-mode.account-page .faq-current,
+    body.dark-mode.account-page .faq-question {
+      color: #f8f6f2;
+    }
+
+    body.dark-mode.account-page .faq-layout {
+      background: #172033;
+      border-color: rgba(248, 246, 242, 0.14);
+      box-shadow: 0 18px 44px rgba(0,0,0,.22);
+    }
+
+    body.dark-mode.account-page .faq-menu {
+      background: #172033;
+      border-right-color: rgba(248, 246, 242, 0.12);
+    }
+
+    body.dark-mode.account-page .faq-menu button {
+      background: #172033;
+      border-color: rgba(248, 246, 242, 0.1);
+      color: #f8f6f2;
+    }
+
+    body.dark-mode.account-page .faq-count {
+      background: var(--color-primario);
+      color: #fff;
+    }
+
+    body.dark-mode.account-page .faq-menu button.active,
+    body.dark-mode.account-page .faq-menu button:hover {
+      background: #1e3a5f;
+      border-color: rgba(248, 246, 242, 0.18);
+      color: #fff;
+      box-shadow: none;
+    }
+
+    body.dark-mode.account-page .faq-menu button.active .faq-count,
+    body.dark-mode.account-page .faq-menu button:hover .faq-count {
+      background: var(--color-primario);
+      color: #fff;
+    }
+
+    body.dark-mode.account-page .faq-item {
+      background: #111827;
+      border-color: rgba(248, 246, 242, 0.12);
+    }
+
+    body.dark-mode.account-page .faq-answer {
+      border-top-color: rgba(248, 246, 242, 0.12);
+      color: #d7deea;
+    }
+
+    body.account-page #session-box {
+      display: none !important;
+    }
+
+    .admin-form {
+      display: none;
+      margin-top: 12px;
+      border-top: 1px solid var(--color-borde);
+      padding-top: 12px;
+    }
+
+    .admin-form.show { display: block; }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .login-card { order: 1; }
+    .create-card { order: 2; }
+
+    .panel-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      padding: 1.25rem;
+      box-shadow: var(--sombra-soft);
+    }
+
+    .panel-title {
+      font-family: var(--fuente-titulo);
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: .8rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-copy {
+      color: var(--color-muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .session-box {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--color-suave);
+      border: 1px solid rgba(245, 124, 0, 0.22);
+      border-radius: 10px;
+      padding: .95rem 1rem;
+    }
+
+    .session-box.show { display: flex; }
+
+    .session-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .session-name {
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .session-detail,
+    .mini-muted {
+      color: var(--color-muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .admin-summary {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: var(--sombra-soft);
+    }
+
+    .summary-number {
+      font-family: var(--fuente-titulo);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--color-primario);
+      line-height: 1;
+    }
+
+    .summary-label {
+      color: var(--color-muted);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .data-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .data-item {
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      padding: .9rem;
+      background: rgba(255,255,255,.72);
+    }
+
+    body.dark-mode .data-item {
+      background: #1d2940;
+      border-color: rgba(248, 246, 242, 0.14);
+    }
+
+    .data-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    body.dark-mode .data-head {
+      color: #f8f6f2;
+    }
+
+    .data-meta {
+      color: var(--color-muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    body.dark-mode .data-meta {
+      color: #d7deea;
+    }
+
+    .admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .admin-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--color-borde);
+      color: var(--color-muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .admin-repair-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .admin-repair-card {
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      padding: .85rem;
+      background: rgba(255,255,255,.76);
+      display: grid;
+      gap: 8px;
+      min-height: 185px;
+    }
+
+    body.dark-mode .admin-repair-card {
+      background: #172238;
+      border-color: rgba(248, 246, 242, 0.14);
+    }
+
+    .admin-repair-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .admin-repair-title {
+      display: grid;
+      gap: 3px;
+    }
+
+    .admin-repair-title small {
+      color: var(--color-muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .admin-repair-info {
+      color: var(--color-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .admin-repair-info strong {
+      color: var(--color-texto);
+    }
+
+    body.dark-mode .admin-repair-info strong {
+      color: #f8f6f2;
+    }
+
+    .admin-completed-folder {
+      margin-top: 14px;
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,.45);
+    }
+
+    body.dark-mode .admin-completed-folder {
+      background: #111827;
+      border-color: rgba(248, 246, 242, 0.14);
+    }
+
+    .admin-completed-folder summary {
+      cursor: pointer;
+      padding: .85rem;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--color-texto);
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .admin-completed-folder summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .admin-completed-folder .data-list {
+      padding: 0 .85rem .85rem;
+      margin-top: 0;
+    }
+
+    .status-btn {
+      border: 1px solid var(--color-borde);
+      background: #fff;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-family: var(--fuente-cuerpo);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .15s ease, background .15s ease;
+    }
+
+    body.dark-mode .status-btn {
+      background: #f8f6f2;
+      border-color: transparent;
+      color: #111827;
+    }
+
+    .status-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--color-borde-fuerte);
+    }
+    .status-btn.red {
+      background: rgba(220,38,38,.08);
+      border-color: rgba(220,38,38,.22);
+      color: #b91c1c;
+    }
+    .status-btn.amber {
+      background: rgba(245,158,11,.16);
+      border-color: rgba(245,158,11,.34);
+      color: #b45309;
+    }
+    .status-btn.green {
+      background: rgba(63,153,57,.1);
+      border-color: rgba(63,153,57,.24);
+      color: #2a7a26;
+    }
+
+    .status-btn.danger {
+      background: rgba(220,38,38,.08);
+      border-color: rgba(220,38,38,.22);
+      color: #b91c1c;
+    }
+
+    .admin-content { display: none; }
+    .admin-content.show {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .admin-content > .panel-card,
+    .admin-content > .admin-summary {
+      grid-column: 1 / -1;
+    }
+
+    .admin-content > .admin-card-wide {
+      grid-column: 1 / -1;
+    }
+
+    .admin-content > .admin-card-left {
+      grid-column: span 6;
+    }
+
+    .admin-content > .admin-card-right {
+      grid-column: span 6;
+    }
+
+    .hidden-admin-entry { display: none; }
+
+    .store-disabled {
+      display: none !important;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 58, 95, 0.38);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 900;
+    }
+    .modal-backdrop.show { display: flex; }
+
+    .modal-card {
+      width: min(560px, 100%);
+      max-height: 86vh;
+      overflow: auto;
+      background: var(--color-card);
+      border: 1px solid var(--color-borde);
+      border-radius: var(--radio-borde);
+      box-shadow: 0 18px 48px rgba(30, 58, 95, 0.24);
+      padding: 1.25rem;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .modal-close {
+      border: 1px solid var(--color-borde);
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      color: var(--color-muted);
+      font-weight: 800;
+    }
+
+    body.dark-mode .modal-close {
+      background: #f8f6f2;
+      color: #172033;
+      border-color: transparent;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .detail-item {
+      border: 1px solid var(--color-borde);
+      border-radius: 10px;
+      padding: .8rem;
+      background: rgba(255,255,255,.72);
+    }
+
+    body.dark-mode .detail-item {
+      background: #1d2940;
+      border-color: rgba(248, 246, 242, 0.14);
+    }
+
+    .detail-item.full { grid-column: 1 / -1; }
+
+    .detail-label {
+      color: var(--color-muted);
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    body.dark-mode .detail-label {
+      color: #aeb8c9;
+    }
+
+    .detail-value {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    body.dark-mode .detail-value {
+      color: #f8f6f2;
+    }
 
     .toast {
       position: fixed;
@@ -445,16 +1836,94 @@
       text-align: center;
       font-size: 12px;
       color: var(--color-muted);
+      margin-top: auto;
+      box-shadow: 0 -12px 26px rgba(30, 58, 95, 0.08);
     }
     footer a { color: var(--color-primario); text-decoration: none; }
+
+    .music-credit {
+      margin-top: 8px;
+      font-size: 10px;
+      opacity: .68;
+    }
+
+    body:not(.dark-mode) footer {
+      border-top-color: rgba(30, 58, 95, 0.18);
+    }
+
+    body.dark-mode footer {
+      background: #151f31;
+      border-top-color: rgba(248, 246, 242, 0.12);
+      color: #d7deea;
+      box-shadow: 0 -12px 26px rgba(0, 0, 0, 0.16);
+    }
+
+    body.dark-mode footer strong {
+      color: #f8f6f2;
+    }
+
+    body.dark-mode footer a {
+      color: #ff9a2f;
+    }
+
+    body.dark-mode .toast {
+      background: #f8f6f2;
+      color: #111827;
+    }
+
+    .whatsapp-float {
+      position: fixed;
+      right: 1.35rem;
+      bottom: 1.35rem;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #25d366;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 22px;
+      box-shadow: 0 12px 26px rgba(18, 140, 126, 0.32);
+      z-index: 850;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .whatsapp-float:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(18, 140, 126, 0.42);
+    }
+
+    .whatsapp-float span {
+      transform: translateY(-1px);
+    }
+
+    .whatsapp-float svg {
+      width: 30px;
+      height: 30px;
+      fill: currentColor;
+    }
 
     @media (max-width: 780px) {
       header {
         height: auto;
+        min-height: auto;
         padding-top: 0.9rem;
         padding-bottom: 0.9rem;
-        flex-direction: column;
+        grid-template-columns: 1fr;
+        justify-items: center;
         gap: 0.8rem;
+      }
+
+      .logo-img {
+        width: 96px;
+        height: 96px;
+      }
+
+      .logo-texto {
+        font-size: 1.6rem;
       }
 
       .nav-links {
@@ -466,61 +1935,256 @@
       .stats {
         grid-template-columns: 1fr;
       }
+
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: left;
+      }
+
+      .hero-logo {
+        width: min(240px, 72vw);
+        justify-self: center;
+        order: -1;
+      }
+
+      .auth-grid,
+      .admin-summary,
+      .account-dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-content.show {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-content > .panel-card,
+      .admin-content > .admin-summary,
+      .admin-content > .admin-card-wide,
+      .admin-content > .admin-card-left,
+      .admin-content > .admin-card-right {
+        grid-column: 1;
+      }
+
+      .account-card {
+        padding: 1.25rem;
+      }
+
+      .account-card .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .repair-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .repair-services .services-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .product-detail-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .product-detail-media {
+        min-height: 240px;
+      }
+
+      .account-card .form-group.wide,
+      .account-card .form-group.full {
+        grid-column: 1;
+      }
+
+      .process-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .trust-hours {
+        grid-template-columns: 1fr;
+      }
+
+      .faq-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .faq-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .faq-menu {
+        border-right: 0;
+        border-bottom: 1px solid var(--color-borde);
+      }
+
+      .session-box {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .session-actions {
+        justify-content: flex-start;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .whatsapp-float {
+        right: 1rem;
+        bottom: 1rem;
+        width: 54px;
+        height: 54px;
+      }
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="logo">
+    <div class="logo" onclick="goHome()" role="button" tabindex="0" aria-label="Ir al inicio">
+      <img class="logo-img" src="imagen_2026-05-27_010200435-removebg-preview.png" alt="Kench al Rescate">
       <div class="logo-texto">Kench <span>al Rescate</span></div>
     </div>
     <nav>
       <ul class="nav-links">
         <li><a href="#" onclick="switchTab('reparacion')">Reparación</a></li>
-        <li><a href="#" onclick="switchTab('productos')">Comprar</a></li>
+        <li class="store-disabled"><a href="#" onclick="switchTab('productos')">Comprar</a></li>
         <li><a href="#" onclick="switchTab('vender')">Vender</a></li>
+        <li><a href="#" onclick="switchTab('cuenta')">Cuenta</a></li>
         <li><a href="https://wa.me/54911122942979" target="_blank">WhatsApp</a></li>
+        <li><button class="music-toggle" id="music-toggle" onclick="toggleMusic()" aria-label="Activar música"></button></li>
+        <li><button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar modo">☾</button></li>
       </ul>
     </nav>
   </header>
 
+  <audio id="site-music" src="PeriTune_Village_Fete-chosic.com_.mp3" loop preload="none"></audio>
+
   <div class="hero">
-    <div class="badge">⚡ Servicio técnico confiable</div>
-    <h1>Kench<br><span>al Rescate</span></h1>
-    <p>Reparamos tus dispositivos, y también compramos y vendemos equipos. Todo en un solo lugar.</p>
-    <div class="hero-btns">
-      <button class="btn-primary" onclick="switchTab('reparacion')">Pedir reparación</button>
-      <button class="btn-secondary" onclick="switchTab('productos')">Ver productos</button>
+    <div class="hero-content">
+      <div class="badge">⚡ Servicio técnico confiable</div>
+      <h1>Kench<br><span>al Rescate</span></h1>
+      <p>Servicio técnico en Villa Crespo para computadoras, notebooks, celulares, consolas y joysticks. Diagnóstico claro, seguimiento por WhatsApp y atención personalizada.</p>
+      <p>Reparamos tus dispositivos, y también compramos y vendemos equipos. Todo en un solo lugar.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="switchTab('reparacion')">Pedir reparación</button>
+        <button class="btn-secondary" onclick="switchTab('estado')">Seguir mi pedido</button>
+      </div>
     </div>
+    <img class="hero-logo" src="imagen_2026-05-27_010200435-removebg-preview.png" alt="Kench al Rescate">
   </div>
+
+  <section class="how-work">
+    <div class="how-title">Cómo trabajamos</div>
+    <p class="how-copy">Un proceso claro para que sepas en qué estado está tu equipo desde el primer contacto hasta la entrega.</p>
+    <div class="process-grid">
+      <div class="process-card">
+        <div class="process-number">1</div>
+        <div class="process-name">Recibimos tu equipo</div>
+        <div class="process-desc">Contanos el problema y registramos el ingreso.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">2</div>
+        <div class="process-name">Diagnosticamos</div>
+        <div class="process-desc">Revisamos el equipo y detectamos la falla.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">3</div>
+        <div class="process-name">Presupuestamos</div>
+        <div class="process-desc">Te informamos costo y tiempo estimado.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">4</div>
+        <div class="process-name">Reparamos</div>
+        <div class="process-desc">Realizamos el trabajo con las herramientas adecuadas.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">5</div>
+        <div class="process-name">Entregamos</div>
+        <div class="process-desc">Probamos el equipo y entregamos con garantía.</div>
+      </div>
+    </div>
+    <div class="trust-hours">
+      <div class="trust-card">
+        <h3>Confianza Kench</h3>
+        <div class="trust-list">
+          <div><span>✓</span>Diagnóstico transparente</div>
+          <div><span>✓</span>Seguimiento del pedido</div>
+          <div><span>✓</span>Garantía de 30 días</div>
+          <div><span>✓</span>Atención personalizada</div>
+        </div>
+      </div>
+      <div class="hours-card">
+        <h3>Horarios</h3>
+        <div class="hours-list">
+          <div><strong>Lunes a viernes</strong> · 09:00 a 18:00</div>
+          <div><strong>Sábados</strong> · 10:00 a 14:00</div>
+          <div><strong>Domingos</strong> · Cerrado</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div class="stats">
     <div class="stat">
-      <div class="stat-n">+500</div>
+      <div class="stat-n" id="stat-repairs">+500</div>
       <div class="stat-l">Reparaciones</div>
     </div>
     <div class="stat">
-      <div class="stat-n">48h</div>
+      <div class="stat-n" id="stat-time">48h</div>
       <div class="stat-l">Tiempo promedio</div>
     </div>
     <div class="stat">
-      <div class="stat-n">98%</div>
+      <div class="stat-n" id="stat-satisfaction">98%</div>
       <div class="stat-l">Satisfacción</div>
     </div>
   </div>
 
+  <section class="how-work" style="display: none;">
+    <div class="how-title">Cómo trabajamos</div>
+    <p class="how-copy">Te acompañamos desde la recepción hasta la entrega del equipo, con seguimiento claro y garantía según el tipo de trabajo y repuesto utilizado.</p>
+    <div class="process-grid">
+      <div class="process-card">
+        <div class="process-number">1</div>
+        <div class="process-name">Recibimos el equipo</div>
+        <div class="process-desc">Tomamos tus datos y registramos la solicitud.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">2</div>
+        <div class="process-name">Diagnosticamos</div>
+        <div class="process-desc">Revisamos la falla y evaluamos el estado del dispositivo.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">3</div>
+        <div class="process-name">Presupuestamos</div>
+        <div class="process-desc">Te avisamos costo, tiempos y opciones antes de avanzar.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">4</div>
+        <div class="process-name">Reparamos</div>
+        <div class="process-desc">Trabajamos sobre lo aprobado y actualizamos el estado.</div>
+      </div>
+      <div class="process-card">
+        <div class="process-number">5</div>
+        <div class="process-name">Retirás con garantía</div>
+        <div class="process-desc">Probás el equipo y te llevás el comprobante del trabajo.</div>
+      </div>
+    </div>
+  </section>
+
   <div class="main">
     <div class="tabs">
       <button class="tab active" id="tab-reparacion" onclick="switchTab('reparacion')">🔧 Reparación</button>
-      <button class="tab" id="tab-productos" onclick="switchTab('productos')">🛒 Comprar</button>
+      <button class="tab store-disabled" id="tab-productos" onclick="switchTab('productos')">🛒 Comprar</button>
       <button class="tab" id="tab-vender" onclick="switchTab('vender')">💰 Vender</button>
       <button class="tab" id="tab-estado" onclick="switchTab('estado')">📦 Mi pedido</button>
+      <button class="tab hidden-admin-entry" id="tab-cuenta" onclick="switchTab('cuenta')">Cuenta</button>
+      <button class="tab hidden-admin-entry" id="tab-admin" onclick="switchTab('admin')">Admin</button>
     </div>
 
     <div class="section active" id="section-reparacion">
       <p class="section-title">¿Qué necesitás reparar?</p>
 
-      <div class="services-grid">
+      <div class="services-grid" style="display: none;">
         <div class="service-card" onclick="selectService('Celular')">
           <div class="svc-icon">
             <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
@@ -549,25 +2213,88 @@
           <div class="svc-name">Consola</div>
           <div class="svc-desc">Joystick, lector, HDMI</div>
         </div>
+        <div class="service-card" onclick="selectService('Joysticks y Mandos')">
+          <div class="svc-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="4"/><line x1="7" y1="12.5" x2="11" y2="12.5"/><line x1="9" y1="10.5" x2="9" y2="14.5"/><circle cx="16.5" cy="11.5" r="1"/><circle cx="18.5" cy="13.5" r="1"/></svg>
+          </div>
+          <div class="svc-name">Joysticks y Mandos</div>
+          <div class="svc-desc">Drift, botones, carga</div>
+        </div>
+        <div class="service-card" onclick="selectService('PC de Escritorio')">
+          <div class="svc-icon">
+            <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><circle cx="12" cy="16" r="1.5"/></svg>
+          </div>
+          <div class="svc-name">PC de Escritorio</div>
+          <div class="svc-desc">Fuente, placa, limpieza</div>
+        </div>
       </div>
 
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Nombre *</label>
-          <input type="text" id="rep-nombre" placeholder="Tu nombre completo">
+      <div class="repair-layout">
+      <div class="repair-services">
+      <div class="services-grid">
+        <div class="service-card" onclick="selectService('PC de Escritorio')">
+          <div class="svc-icon">
+            <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><circle cx="12" cy="16" r="1.5"/></svg>
+          </div>
+          <div class="svc-name">PC de Escritorio</div>
+          <div class="svc-desc">Fuente, placa, limpieza</div>
         </div>
+        <div class="service-card" onclick="selectService('Notebook')">
+          <div class="svc-icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+          </div>
+          <div class="svc-name">Notebook</div>
+          <div class="svc-desc">Teclado, pantalla, RAM</div>
+        </div>
+        <div class="service-card" onclick="selectService('Consola')">
+          <div class="svc-icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="3"/><circle cx="17" cy="12" r="1"/><circle cx="19" cy="10" r="1"/></svg>
+          </div>
+          <div class="svc-name">Consola</div>
+          <div class="svc-desc">Limpieza, lector, HDMI</div>
+        </div>
+        <div class="service-card" onclick="selectService('Joysticks y Mandos')">
+          <div class="svc-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="4"/><line x1="7" y1="12.5" x2="11" y2="12.5"/><line x1="9" y1="10.5" x2="9" y2="14.5"/><circle cx="16.5" cy="11.5" r="1"/><circle cx="18.5" cy="13.5" r="1"/></svg>
+          </div>
+          <div class="svc-name">Joysticks y Mandos</div>
+          <div class="svc-desc">Drift, botones, carga</div>
+        </div>
+        <div class="service-card" onclick="selectService('Celulares')">
+          <div class="svc-icon">
+            <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+          </div>
+          <div class="svc-name">Celulares</div>
+          <div class="svc-desc">Batería, software, limpieza</div>
+        </div>
+      </div>
+
+      </div>
+
+      <div class="repair-form-card">
+      <div class="panel-title">Datos para la reparación</div>
+      <div class="form-grid">
+              <div class="form-group">
+                <label>Nombre *</label>
+                <input type="text" id="rep-nombre" placeholder="Tu nombre completo" autocomplete="name">
+              </div>
         <div class="form-group">
           <label>Teléfono / WhatsApp *</label>
-          <input type="tel" id="rep-telefono" placeholder="+54 9 ...">
+          <input type="tel" id="rep-telefono" placeholder="+54 9 11 2294-2979" inputmode="tel" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="rep-email" placeholder="tu@email.com" autocomplete="email">
         </div>
         <div class="form-group">
           <label>Dispositivo *</label>
           <select id="rep-dispositivo">
             <option value="">Seleccioná...</option>
-            <option>Celular</option>
+            <option>PC de Escritorio</option>
             <option>Notebook</option>
-            <option>Tablet</option>
             <option>Consola</option>
+            <option>Joysticks y Mandos</option>
+            <option>Celulares</option>
             <option>Otro</option>
           </select>
         </div>
@@ -583,18 +2310,21 @@
       <div class="submit-row">
         <button class="btn-primary" onclick="enviarReparacion()">Enviar solicitud →</button>
       </div>
+      <div class="sell-note" id="repair-order-result" style="display: none; margin-top: 1rem;"></div>
+      </div>
+      </div>
     </div>
 
     <div class="section" id="section-productos">
       <p class="section-title">Equipos disponibles</p>
-      <div class="products-grid">
+      <div class="products-grid" id="products-grid" style="display: none;">
         <div class="product-card" onclick="consultarProducto('iPhone 11 64GB')">
           <div class="product-img">
             <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
           </div>
           <div class="product-info">
             <div class="product-name">iPhone 11 64GB</div>
-            <div class="product-price">$500.000</div>
+            <div class="product-price">$320.000</div>
             <div class="product-status"><span class="pill pill-green">Disponible</span></div>
           </div>
         </div>
@@ -605,7 +2335,7 @@
           </div>
           <div class="product-info">
             <div class="product-name">Samsung A52</div>
-            <div class="product-price">$350.000</div>
+            <div class="product-price">$195.000</div>
             <div class="product-status"><span class="pill pill-green">Disponible</span></div>
           </div>
         </div>
@@ -616,7 +2346,7 @@
           </div>
           <div class="product-info">
             <div class="product-name">Notebook Lenovo</div>
-            <div class="product-price">$724.000</div>
+            <div class="product-price">$580.000</div>
             <div class="product-status"><span class="pill pill-amber">Reservado</span></div>
           </div>
         </div>
@@ -627,7 +2357,7 @@
           </div>
           <div class="product-info">
             <div class="product-name">PS4 Slim 500GB</div>
-            <div class="product-price">$540.200</div>
+            <div class="product-price">$420.000</div>
             <div class="product-status"><span class="pill pill-green">Disponible</span></div>
           </div>
         </div>
@@ -638,11 +2368,12 @@
           </div>
           <div class="product-info">
             <div class="product-name">iPad 9° Gen</div>
-            <div class="product-price">$600.000</div>
+            <div class="product-price">$410.000</div>
             <div class="product-status"><span class="pill pill-green">Disponible</span></div>
           </div>
         </div>
       </div>
+      <div class="products-grid" id="products-fallback"></div>
       <button class="btn-primary" onclick="consultarProducto('un producto')">Consultar por otro equipo →</button>
     </div>
 
@@ -652,14 +2383,14 @@
         Te compramos tu dispositivo. Completá el formulario y te contactamos con una valuación en menos de 24 horas.
       </div>
       <div class="form-grid">
-        <div class="form-group">
-          <label>Nombre *</label>
-          <input type="text" id="sell-nombre" placeholder="Tu nombre">
-        </div>
-        <div class="form-group">
-          <label>Teléfono / WhatsApp *</label>
-          <input type="tel" id="sell-telefono" placeholder="+54 9 ...">
-        </div>
+              <div class="form-group">
+                <label>Nombre *</label>
+                <input type="text" id="sell-nombre" placeholder="Tu nombre" autocomplete="name">
+              </div>
+              <div class="form-group">
+                <label>Teléfono / WhatsApp *</label>
+                <input type="tel" id="sell-telefono" placeholder="+54 9 11 2294-2979" inputmode="tel" autocomplete="tel">
+              </div>
         <div class="form-group">
           <label>Tipo de equipo *</label>
           <select id="sell-tipo">
@@ -742,6 +2473,372 @@
         </div>
       </div>
     </div>
+
+    <div class="section" id="section-cuenta">
+      <p class="section-title">Tu cuenta</p>
+      <div class="auth-shell">
+        <div class="session-box" id="session-box">
+          <div>
+            <div class="session-name" id="session-name"></div>
+            <div class="session-detail" id="session-detail"></div>
+          </div>
+          <div class="session-actions">
+            <button class="btn-secondary" onclick="cerrarSesion()">Cerrar sesión</button>
+          </div>
+        </div>
+
+        <div class="account-dashboard" id="account-dashboard">
+          <div class="panel-card account-menu">
+            <button class="status-btn" onclick="showAccountPanel('datos')">Mis datos</button>
+            <button class="status-btn" onclick="showAccountPanel('reparaciones')">Mis reparaciones</button>
+            <button class="status-btn" onclick="showAccountPanel('compras')">Mis compras</button>
+            <button class="status-btn" onclick="showAccountPanel('ventas')">Mis ventas</button>
+            <button class="status-btn" onclick="showAccountPanel('password')">Cambiar contraseña</button>
+            <button class="status-btn" onclick="showAccountPanel('direcciones')">Mis direcciones</button>
+            <button class="status-btn" id="account-admin-btn" onclick="switchTab('admin')" style="display: none;">Panel de administración</button>
+            <button class="status-btn danger" onclick="cerrarSesion()">Cerrar sesión</button>
+          </div>
+
+          <div class="account-card">
+            <div class="account-panel show" id="account-panel-datos">
+              <div class="account-title">Datos Personales</div>
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label>Número de cliente</label>
+                  <input type="text" id="profile-client-id" disabled>
+                </div>
+                <div class="form-group wide">
+                  <label>Nombre completo *</label>
+                  <input type="text" id="profile-nombre" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                  <label>WhatsApp *</label>
+                  <input type="tel" id="profile-telefono" placeholder="+54 9 11 2294-2979" inputmode="tel">
+                </div>
+                <div class="form-group wide">
+                  <label>Email</label>
+                  <input type="email" id="profile-email" disabled>
+                </div>
+                <div class="form-group">
+                  <label>Tipo de documento</label>
+                  <select id="profile-doc-type">
+                    <option>DNI</option>
+                    <option>Pasaporte</option>
+                    <option>Documento extranjero</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>DNI / Documento</label>
+                  <input type="text" id="profile-dni" placeholder="DNI, pasaporte o documento" maxlength="20">
+                </div>
+              </div>
+
+              <div class="account-subtitle">Datos de facturación</div>
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label>Provincia</label>
+                  <select id="profile-provincia">
+                    <option>Buenos Aires</option>
+                    <option>Ciudad Autónoma de Buenos Aires</option>
+                    <option>Otra provincia</option>
+                    <option>Otro país</option>
+                  </select>
+                </div>
+                <div class="form-group wide">
+                  <label>Dirección / zona</label>
+                  <input type="text" id="profile-direccion" placeholder="Barrio, calle o zona">
+                </div>
+                <div class="form-group">
+                  <label>Codigo Postal</label>
+                  <input type="text" id="profile-cp" placeholder="Ej: 1414">
+                </div>
+                <div class="form-group full">
+                  <label>Localidad</label>
+                  <input type="text" id="profile-localidad" placeholder="Ej: Villa Crespo">
+                </div>
+              </div>
+              <div class="submit-row">
+                <button class="btn-primary" onclick="guardarPerfil()">Actualizar datos</button>
+              </div>
+            </div>
+
+            <div class="account-panel" id="account-panel-reparaciones">
+              <div class="panel-title">Mis reparaciones</div>
+              <div class="data-list" id="account-repairs-list"></div>
+            </div>
+
+            <div class="account-panel" id="account-panel-compras">
+              <div class="panel-title">Mis compras</div>
+              <div class="data-list" id="account-purchases-list"></div>
+            </div>
+
+            <div class="account-panel" id="account-panel-ventas">
+              <div class="panel-title">Mis ventas enviadas</div>
+              <div class="data-list" id="account-sales-list"></div>
+            </div>
+
+            <div class="account-panel" id="account-panel-password">
+              <div class="account-title">Cambiar contraseña</div>
+              <p class="panel-copy">Actualizá la contraseña de la cuenta con la que iniciaste sesión.</p>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Nueva contraseña</label>
+                  <input type="password" id="new-password" placeholder="Mínimo 6 caracteres">
+                </div>
+                <div class="form-group">
+                  <label>Repetir contraseña</label>
+                  <input type="password" id="confirm-password" placeholder="Repetí la contraseña">
+                </div>
+                <button class="btn-primary full" onclick="cambiarPassword()">Actualizar contraseña</button>
+              </div>
+            </div>
+
+            <div class="account-panel" id="account-panel-direcciones">
+              <div class="account-title">Mis direcciones</div>
+              <p class="panel-copy">Tu direccion principal se edita desde Datos Personales.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-grid" id="auth-forms">
+          <div class="panel-card create-card">
+            <div class="panel-title">Crear cuenta</div>
+            <p class="panel-copy">Guardamos tus datos para que puedas pedir reparaciones, vender equipos y consultar más rápido.</p>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Nombre completo *</label>
+                <input type="text" id="reg-nombre" placeholder="Tu nombre" autocomplete="name">
+              </div>
+              <div class="form-group">
+                <label>Documento / DNI</label>
+                <input type="text" id="reg-dni" placeholder="DNI, pasaporte o documento" maxlength="20">
+              </div>
+              <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="reg-email" placeholder="tu@email.com">
+              </div>
+              <div class="form-group">
+                <label>WhatsApp *</label>
+                <input type="tel" id="reg-telefono" placeholder="+54 9 11 2294-2979" inputmode="tel" autocomplete="tel">
+              </div>
+              <div class="form-group full">
+                <label>Dirección</label>
+                <input type="text" id="reg-direccion" placeholder="Barrio, calle o zona">
+              </div>
+              <div class="form-group full">
+                <label>Contraseña *</label>
+                <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
+              </div>
+            </div>
+            <div class="submit-row">
+              <button class="btn-primary" onclick="crearCuenta()">Registrarme</button>
+            </div>
+          </div>
+
+          <div class="panel-card login-card">
+            <div class="panel-title">Iniciar sesión</div>
+            <p class="panel-copy">Entrá con tu email y contraseña para recuperar tus datos en los formularios.</p>
+            <button class="btn-secondary" style="width: 100%; margin-bottom: 1rem;" onclick="loginGoogleDemo()">Continuar con Google</button>
+            <div class="form-grid">
+              <div class="form-group full">
+                <label>Email *</label>
+                <input type="email" id="login-email" placeholder="tu@email.com">
+              </div>
+              <div class="form-group full">
+                <label>Contraseña *</label>
+                <input type="password" id="login-password" placeholder="Tu contraseña">
+              </div>
+            </div>
+            <div class="submit-row">
+              <button class="btn-primary" onclick="iniciarSesion()">Entrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-section" id="account-faq">
+          <div class="faq-heading">
+            <div>
+              <h2>Preguntas Frecuentes</h2>
+              <p>Encontrá respuestas sobre compras, envíos, pagos, garantías y tu cuenta.</p>
+            </div>
+          </div>
+          <div class="faq-layout">
+            <div class="faq-menu" id="faq-menu"></div>
+            <div class="faq-content">
+              <div class="faq-current" id="faq-current"></div>
+              <div class="faq-list" id="faq-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="section-admin">
+      <p class="section-title">Panel de control</p>
+      <div class="admin-shell">
+        <div class="panel-card" id="admin-denied">
+          <div class="panel-title">Acceso restringido</div>
+          <p class="panel-copy">El panel aparece cuando iniciás sesión desde Cuenta con un usuario administrador.</p>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="text" value="Iniciá sesión como administrador" disabled>
+            </div>
+            <div class="form-group">
+              <label>Contraseña *</label>
+              <input type="text" value="Disponible solo para admin" disabled>
+            </div>
+          </div>
+          <div class="submit-row">
+            <button class="btn-primary" onclick="switchTab('cuenta')">Ir a iniciar sesión</button>
+          </div>
+        </div>
+
+        <div class="admin-content" id="admin-content">
+          <div class="session-box show">
+            <div>
+              <div class="session-name">Administrador conectado</div>
+              <div class="session-detail">Datos guardados en este navegador</div>
+            </div>
+            <button class="btn-secondary" onclick="salirAdmin()">Salir del admin</button>
+          </div>
+
+          <div class="admin-summary">
+            <div class="summary-card">
+              <div class="summary-number" id="admin-users-count">0</div>
+              <div class="summary-label">Usuarios registrados</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-number" id="admin-repairs-count">0</div>
+              <div class="summary-label">Solicitudes de reparación</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-number" id="admin-sales-count">0</div>
+              <div class="summary-label">Equipos ofrecidos</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-number" id="admin-products-count">0</div>
+              <div class="summary-label">Productos publicados</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-number" id="admin-purchases-count">0</div>
+              <div class="summary-label">Compras pendientes</div>
+            </div>
+          </div>
+
+          <div class="panel-card admin-card-wide">
+            <div class="panel-title">Reparaciones</div>
+            <div class="admin-section-header">
+              <span>En trabajo</span>
+              <span id="admin-active-repairs-count">0 activas</span>
+            </div>
+            <div class="admin-repair-grid" id="admin-repairs-active-list"></div>
+            <details class="admin-completed-folder">
+              <summary>
+                <span>Carpeta de completadas</span>
+                <span id="admin-completed-repairs-count">0 completadas</span>
+              </summary>
+              <div class="data-list" id="admin-repairs-completed-list"></div>
+            </details>
+          </div>
+
+          <div class="panel-card admin-card-left">
+            <div class="panel-title">Compras pendientes</div>
+            <div class="data-list" id="admin-purchases-list"></div>
+          </div>
+
+          <div class="panel-card admin-card-right">
+            <div class="panel-title">Productos</div>
+            <button class="btn-primary" onclick="toggleProductForm()">Agregar producto</button>
+            <div class="admin-form" id="product-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Nombre *</label>
+                  <input type="text" id="product-nombre" placeholder="Ej: iPhone 12 128GB">
+                </div>
+                <div class="form-group">
+                  <label>Precio *</label>
+                  <input type="number" id="product-precio" placeholder="320000" min="0" step="1">
+                </div>
+                <div class="form-group">
+                  <label>Tipo</label>
+                  <select id="product-tipo">
+                    <option>Celular</option>
+                    <option>Notebook</option>
+                    <option>Tablet</option>
+                    <option>Consola</option>
+                    <option>Otro</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Estado</label>
+                  <select id="product-estado">
+                    <option value="disponible">Disponible</option>
+                    <option value="reservado">Reservado</option>
+                    <option value="vendido">Vendido</option>
+                  </select>
+                </div>
+                <div class="form-group full">
+                  <label>URL de imagen</label>
+                  <input type="url" id="product-imagen" placeholder="https://...">
+                </div>
+                <div class="form-group full">
+                  <label>Descripción</label>
+                  <textarea id="product-desc" placeholder="Estado, accesorios, detalles importantes..."></textarea>
+                </div>
+                <div class="form-group full">
+                  <label>Especificaciones</label>
+                  <textarea id="product-specs" placeholder="Ej:&#10;Procesador: Ryzen 5&#10;RAM: 16GB&#10;Almacenamiento: 512GB SSD&#10;Garantía: 30 días"></textarea>
+                </div>
+              </div>
+              <div class="submit-row">
+                <button class="btn-primary" onclick="guardarProducto()">Publicar producto</button>
+              </div>
+            </div>
+            <div class="data-list" id="admin-products-list"></div>
+          </div>
+
+          <div class="panel-card admin-card-left">
+            <div class="panel-title">Ventas / equipos ofrecidos</div>
+            <div class="admin-section-header">
+              <span>Pendientes de revisar</span>
+              <span id="admin-pending-sales-count">0 pendientes</span>
+            </div>
+            <div class="data-list" id="admin-sales-list"></div>
+            <details class="admin-completed-folder">
+              <summary>
+                <span>Ofertas aceptadas</span>
+                <span id="admin-accepted-sales-count">0 aceptadas</span>
+              </summary>
+              <div class="data-list" id="admin-sales-accepted-list"></div>
+            </details>
+            <details class="admin-completed-folder">
+              <summary>
+                <span>Ofertas rechazadas</span>
+                <span id="admin-rejected-sales-count">0 rechazadas</span>
+              </summary>
+              <div class="data-list" id="admin-sales-rejected-list"></div>
+            </details>
+          </div>
+
+          <div class="panel-card admin-card-right">
+            <div class="panel-title">Usuarios</div>
+            <div class="admin-section-header">
+              <span>Últimos registrados</span>
+              <span id="admin-visible-users-count">0 visibles</span>
+            </div>
+            <div class="data-list" id="admin-users-list"></div>
+            <details class="admin-completed-folder" id="admin-users-folder">
+              <summary>
+                <span>Ver más usuarios</span>
+                <span id="admin-hidden-users-count">0 restantes</span>
+              </summary>
+              <div class="data-list" id="admin-users-extra-list"></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <footer>
@@ -751,16 +2848,1000 @@
       📞 <a href="tel:+54911122942979">11 2294-2979</a> &nbsp;|&nbsp;
       💬 <a href="https://wa.me/54911122942979" target="_blank">WhatsApp</a>
     </p>
+    <p class="music-credit">Music: Village Fete by PeriTune (CC BY 4.0)</p>
   </footer>
+
+  <div class="modal-backdrop" id="client-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="panel-title">Información completa</div>
+          <div class="mini-muted">Cliente y reparación seleccionada</div>
+        </div>
+        <button class="modal-close" onclick="cerrarInfoCliente()">Cerrar</button>
+      </div>
+      <div class="detail-grid" id="client-modal-content"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="product-modal">
+    <div class="modal-card product-detail-modal">
+      <div class="modal-header">
+        <div>
+          <div class="panel-title">Detalle del producto</div>
+          <div class="mini-muted">Información, precio y disponibilidad</div>
+        </div>
+        <button class="modal-close" onclick="cerrarProducto()">Cerrar</button>
+      </div>
+      <div id="product-modal-content"></div>
+    </div>
+  </div>
+
+  <a class="whatsapp-float" href="https://wa.me/54911122942979" target="_blank" aria-label="Escribir por WhatsApp">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M16.04 3.2c-7.02 0-12.72 5.7-12.72 12.72 0 2.24.59 4.43 1.7 6.35L3.2 28.8l6.7-1.76a12.7 12.7 0 0 0 6.14 1.56c7.02 0 12.72-5.7 12.72-12.72S23.06 3.2 16.04 3.2Zm0 23.24c-1.94 0-3.84-.53-5.49-1.53l-.39-.23-3.98 1.04 1.06-3.88-.25-.4a10.48 10.48 0 0 1-1.61-5.52c0-5.88 4.78-10.66 10.66-10.66S26.7 10.04 26.7 15.92 21.92 26.44 16.04 26.44Zm5.84-7.96c-.32-.16-1.9-.94-2.19-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.59-.95-.85-1.59-1.9-1.78-2.22-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.71-1.71-.98-2.35-.26-.62-.52-.53-.71-.54h-.61c-.21 0-.56.08-.85.4-.29.32-1.11 1.09-1.11 2.65 0 1.56 1.14 3.07 1.3 3.28.16.21 2.24 3.42 5.43 4.8.76.33 1.35.52 1.81.67.76.24 1.45.21 2 .13.61-.09 1.9-.78 2.17-1.53.27-.75.27-1.39.19-1.53-.08-.14-.29-.21-.61-.37Z"/>
+    </svg>
+  </a>
 
   <div class="toast" id="toast"></div>
 
   <script>
+    var STORAGE_KEYS = {
+      users: 'kench_users',
+      session: 'kench_session',
+      repairs: 'kench_repairs',
+      sales: 'kench_sales',
+      products: 'kench_products',
+      purchases: 'kench_purchases',
+      admin: 'kench_admin_session'
+    };
+
+    var THEME_KEY = 'kench_theme';
+
+    var ADMIN_EMAIL = 'manzanabailarinafeliz@gmail.com';
+    var ADMIN_PASSWORD = '1234';
+    var SUPABASE_URL = 'https://wmzvgeknauzipbtncemf.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtenZnZWtuYXV6aXBidG5jZW1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4NDE3MDEsImV4cCI6MjA5NTQxNzcwMX0.aTuOnK4PhMWm1GMZI2XEo8HVWzGiRM4XV_9-1ByXCjU';
+    var SUPABASE_REQUIRED = true;
+    var supabaseLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    var supabaseClient = supabaseLibrary
+      ? supabaseLibrary.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+
+    async function ensureSupabaseClient() {
+      if (supabaseClient) return supabaseClient;
+
+      var library = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+
+      if (!library) {
+        try {
+          library = await import('https://esm.sh/@supabase/supabase-js@2');
+        } catch (error) {
+          library = null;
+        }
+      }
+
+      if (library && library.createClient) {
+        supabaseClient = library.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
+      return supabaseClient;
+    }
+
+    var REPAIR_STATUSES = {
+      pendiente: { label: 'Pendiente', pill: 'pill-red', button: 'red' },
+      en_curso: { label: 'En curso', pill: 'pill-amber', button: 'amber' },
+      completado: { label: 'Completado', pill: 'pill-green', button: 'green' }
+    };
+
+    var PRODUCT_STATUSES = {
+      disponible: { label: 'Disponible', pill: 'pill-green' },
+      reservado: { label: 'Reservado', pill: 'pill-amber' },
+      vendido: { label: 'Vendido', pill: 'pill-red' }
+    };
+
+    var PURCHASE_STATUSES = {
+      pendiente_pago: { label: 'Pendiente de pago', pill: 'pill-amber' },
+      confirmado: { label: 'Pago confirmado', pill: 'pill-green' },
+      cancelado: { label: 'Cancelada', pill: 'pill-red' }
+    };
+
+    var SALE_ADMIN_STATUSES = {
+      pendiente: { label: 'Pendiente', pill: 'pill-amber' },
+      aceptado: { label: 'Aceptado', pill: 'pill-green' },
+      rechazado: { label: 'Rechazado', pill: 'pill-red' }
+    };
+
+    var FAQ_DATA = [
+      {
+        id: 'compras',
+        title: 'Compras',
+        items: [
+          { q: '¿Cómo realizo una compra?', a: 'Podés consultar nuestros productos desde la sección Comprar y solicitar información del equipo que te interese. Una vez confirmada la disponibilidad, coordinamos el pago y la entrega por WhatsApp.' },
+          { q: '¿Puedo comprar desde cualquier parte del país?', a: 'Sí. Realizamos envíos a todo Argentina mediante correo o transporte según el tipo de producto. También podés retirar personalmente en Villa Crespo, CABA.' },
+          { q: '¿Puedo modificar mi pedido después de comprar?', a: 'Sí, siempre que el pedido todavía no haya sido despachado o reservado definitivamente. Contactanos lo antes posible por WhatsApp para ayudarte.' },
+          { q: '¿Cómo sé si mi compra quedó registrada?', a: 'Una vez confirmada la compra, recibirás un mensaje por WhatsApp o correo con la información de tu pedido y estado actual.' },
+          { q: '¿Es necesario crear una cuenta para comprar?', a: 'No es obligatorio, pero tener una cuenta te permite seguir tus pedidos y guardar tus datos para futuras compras o reparaciones.' },
+          { q: '¿Dónde cargo el comprobante si pago por transferencia?', a: 'Podés enviarlo directamente por WhatsApp junto con tu nombre y número de pedido para validar el pago más rápido.' },
+          { q: '¿Cómo consulto el stock de un producto?', a: 'El stock visible en la página se actualiza constantemente. Si tenés dudas sobre disponibilidad, podés consultarnos directamente antes de realizar la compra.' }
+        ]
+      },
+      {
+        id: 'pagos',
+        title: 'Pagos y Facturación',
+        items: [
+          { q: '¿Qué medios de pago aceptan?', a: 'Aceptamos efectivo, transferencias bancarias y billeteras virtuales. Algunos productos también pueden abonarse mediante otros medios coordinados por WhatsApp.' },
+          { q: '¿Qué tipo de factura se emite?', a: 'Emitimos comprobantes y facturación básica según corresponda para cada venta o servicio realizado.' },
+          { q: '¿Cómo obtengo una copia de mi factura?', a: 'Podés solicitarla por WhatsApp indicando tu nombre, fecha de compra y producto adquirido.' },
+          { q: '¿Puedo solicitar una refacturación?', a: 'Sí, siempre que la solicitud se haga dentro de un plazo razonable y los datos sean correctos.' },
+          { q: 'Detecté un cobro en mi tarjeta que no reconozco', a: 'Contactanos inmediatamente indicando fecha, monto y medio de pago para revisar el caso y ayudarte lo antes posible.' }
+        ]
+      },
+      {
+        id: 'envios',
+        title: 'Envíos',
+        items: [
+          { q: '¿Cómo funcionan los envíos?', a: 'Una vez confirmado el pago y disponibilidad, preparamos el pedido y coordinamos el envío mediante correo o entrega acordada.' },
+          { q: '¿Cuáles son los plazos de entrega?', a: 'Los tiempos dependen del producto y ubicación. En general, los envíos dentro de CABA son más rápidos que al interior del país.' },
+          { q: '¿Cómo se embalan los paquetes?', a: 'Todos los productos se embalan cuidadosamente para protegerlos durante el transporte.' },
+          { q: '¿Qué pasa si no estoy en casa al momento de la entrega?', a: 'El correo realizará una nueva visita o dejará instrucciones para retirar el paquete en sucursal.' },
+          { q: '¿Cómo hago el seguimiento de mi envío?', a: 'Te enviaremos el número de seguimiento apenas el pedido sea despachado.' },
+          { q: '¿Qué hago si mi pedido está demorado?', a: 'Podés escribirnos por WhatsApp indicando tu número de pedido para verificar el estado del envío.' }
+        ]
+      },
+      {
+        id: 'devoluciones',
+        title: 'Devoluciones y Cambios',
+        items: [
+          { q: '¿Puedo devolver un producto?', a: 'Sí, siempre que el producto se encuentre en las mismas condiciones en las que fue entregado y dentro del plazo acordado.' },
+          { q: '¿Puedo cambiar un producto?', a: 'Sí, sujeto a disponibilidad y revisión del estado del producto.' },
+          { q: '¿Qué productos no tienen cambio ni devolución?', a: 'No se aceptan cambios en productos dañados por mal uso, golpes, humedad o modificaciones realizadas por terceros.' }
+        ]
+      },
+      {
+        id: 'garantias',
+        title: 'Garantías',
+        items: [
+          { q: '¿Cómo funciona el servicio de garantía?', a: 'Todos los trabajos y productos cuentan con garantía limitada según el tipo de reparación o equipo entregado.' },
+          { q: '¿Cuáles son los plazos de garantía?', a: 'Todos los trabajos realizados por Kench al Rescate cuentan con una garantía de 30 días corridos desde la fecha de entrega, cubriendo únicamente fallas relacionadas con la reparación efectuada.' },
+          { q: '¿Cuánto demora el servicio de garantía?', a: 'Intentamos resolver los casos de garantía lo más rápido posible según el diagnóstico y disponibilidad de repuestos.' },
+          { q: '¿Qué requisitos necesito para hacer un reclamo de garantía?', a: 'Necesitás presentar el comprobante, número de pedido o información del servicio realizado.' },
+          { q: '¿Cuáles son las exclusiones de garantía?', a: 'La garantía no cubre daños por golpes, líquidos, humedad, uso incorrecto, software modificado o reparaciones realizadas por terceros.' }
+        ]
+      },
+      {
+        id: 'cuenta',
+        title: 'Mi Cuenta',
+        items: [
+          { q: 'No puedo ingresar a mi cuenta', a: 'Verificá que el correo y contraseña sean correctos. Si el problema continúa, podés recuperar el acceso desde la opción correspondiente.' },
+          { q: '¿Cómo cambio mi contraseña?', a: 'Desde la configuración de tu cuenta o utilizando la opción Olvidé mi contraseña.' },
+          { q: '¿Cómo cambio mi correo electrónico?', a: 'Podés solicitar el cambio desde tu perfil o contactándonos directamente.' },
+          { q: '¿Cómo consulto o actualizo mis datos personales?', a: 'Ingresando a tu cuenta vas a poder modificar tu información personal y datos de contacto.' }
+        ]
+      },
+      {
+        id: 'empresa',
+        title: 'Nuestra Empresa',
+        items: [
+          { q: '¿Cómo puedo contactarme con atención al cliente?', a: 'Podés comunicarte por WhatsApp, redes sociales o mediante el formulario de contacto disponible en la web.' },
+          { q: 'Política de Privacidad', a: 'La información de los clientes se utiliza únicamente para gestionar pedidos, reparaciones y contacto relacionado con los servicios ofrecidos.' }
+        ]
+      }
+    ];
+
     function switchTab(name) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.body.classList.toggle('account-page', name === 'cuenta');
+      document.body.classList.toggle('admin-page', name === 'admin');
       document.getElementById('tab-' + name).classList.add('active');
       document.getElementById('section-' + name).classList.add('active');
+      if (name === 'productos') renderProducts();
+      if (name === 'cuenta') {
+        showAccountPanel('datos');
+        renderAccountDashboard();
+      }
+      if (name === 'admin') renderAdmin();
+    }
+
+    function goHome() {
+      switchTab('reparacion');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getData(key) {
+      return JSON.parse(localStorage.getItem(key) || '[]');
+    }
+
+    function setData(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function applyTheme(theme) {
+      var isDark = theme === 'dark';
+      document.body.classList.toggle('dark-mode', isDark);
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.textContent = isDark ? '☀' : '☾';
+    }
+
+    function toggleTheme() {
+      var nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, nextTheme);
+      applyTheme(nextTheme);
+    }
+
+    function setupMusic() {
+      var audio = document.getElementById('site-music');
+      if (!audio) return;
+      audio.volume = 0.05;
+      updateMusicButton(false);
+    }
+
+    function updateMusicButton(isPlaying) {
+      var btn = document.getElementById('music-toggle');
+      if (!btn) return;
+      btn.classList.toggle('is-playing', isPlaying);
+      btn.innerHTML = isPlaying
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg>'
+        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M17 9l5 5"/><path d="M22 9l-5 5"/></svg>';
+      btn.setAttribute('aria-label', isPlaying ? 'Pausar música' : 'Activar música');
+    }
+
+    async function toggleMusic() {
+      var audio = document.getElementById('site-music');
+      if (!audio) return;
+      audio.volume = 0.05;
+
+      if (audio.paused) {
+        try {
+          await audio.play();
+          updateMusicButton(true);
+        } catch (error) {
+          showToast('El navegador bloqueó la música. Tocá de nuevo para reproducir.');
+        }
+      } else {
+        audio.pause();
+        updateMusicButton(false);
+      }
+    }
+
+    function getSession() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.session) || 'null');
+    }
+
+    function setSession(user) {
+      localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(user));
+      updateSessionUI();
+      prefillContactForms(user);
+      renderAdmin();
+      renderProducts();
+      renderAccountDashboard();
+      updateStats();
+    }
+
+    async function clearSession() {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      localStorage.removeItem(STORAGE_KEYS.session);
+      localStorage.removeItem(STORAGE_KEYS.admin);
+      updateSessionUI();
+      renderAdmin();
+    }
+
+    function isAdminCredentials(email, password) {
+      return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
+    }
+
+    function isAdminSession() {
+      var user = getSession();
+      return !!user && user.role === 'admin';
+    }
+
+    function mapProfile(profile, authUser) {
+      if (!profile && !authUser) return null;
+      return {
+        id: (profile && profile.id) || (authUser && authUser.id),
+        nombre: (profile && profile.nombre) || (authUser && authUser.email) || '',
+        dni: (profile && profile.dni) || '',
+        email: (profile && profile.email) || (authUser && authUser.email ? authUser.email : ''),
+        telefono: (profile && profile.telefono) || '',
+        direccion: (profile && profile.direccion) || '',
+        role: (profile && profile.role) || 'cliente',
+        creado: (profile && profile.created_at) || new Date().toISOString()
+      };
+    }
+
+    function mapRepair(row) {
+      return {
+        id: '#R' + String(row.id).padStart(5, '0'),
+        dbId: row.id,
+        userId: row.user_id,
+        userEmail: '',
+        nombre: row.nombre,
+        telefono: row.telefono,
+        email: row.email || '',
+        dispositivo: row.dispositivo,
+        modelo: row.modelo || '',
+        descripcion: row.descripcion || '',
+        estado: row.estado || 'pendiente',
+        creado: row.created_at,
+        actualizado: row.updated_at
+      };
+    }
+
+    function mapSale(row) {
+      return {
+        id: '#V' + String(row.id).padStart(5, '0'),
+        dbId: row.id,
+        userId: row.user_id,
+        userEmail: '',
+        nombre: row.nombre,
+        telefono: row.telefono,
+        tipo: row.tipo,
+        modelo: row.modelo || '',
+        estado: row.estado || '',
+        estadoAdmin: row.estado_admin || 'pendiente',
+        descripcion: row.descripcion || '',
+        creado: row.created_at
+      };
+    }
+
+    function mapProduct(row) {
+      return {
+        id: '#P' + String(row.id).padStart(5, '0'),
+        dbId: row.id,
+        nombre: row.nombre,
+        precio: Number(row.precio || 0),
+        tipo: row.tipo || 'Equipo',
+        descripcion: row.descripcion || '',
+        imagenUrl: row.imagen_url || '',
+        especificaciones: row.especificaciones || '',
+        estado: row.estado || 'disponible',
+        creado: row.created_at,
+        actualizado: row.updated_at
+      };
+    }
+
+    function mapPurchase(row) {
+      var product = row.products || {};
+      return {
+        id: '#C' + String(row.id).padStart(5, '0'),
+        dbId: row.id,
+        userId: row.user_id,
+        productId: row.product_id,
+        productName: product.nombre || row.product_name || 'Producto',
+        productPrice: Number(product.precio || row.product_price || 0),
+        nombre: row.nombre,
+        email: row.email || '',
+        telefono: row.telefono || '',
+        estado: row.estado || 'pendiente_pago',
+        creado: row.created_at,
+        actualizado: row.updated_at
+      };
+    }
+
+    function parseDbId(id) {
+      return Number(String(id).replace(/\D/g, ''));
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, function(char) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
+      });
+    }
+
+    function formatDate(value) {
+      return new Date(value).toLocaleString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatMoney(value) {
+      return '$' + Number(value || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+    }
+
+    function validateName(value, fieldName) {
+      var name = value.trim().replace(/\s+/g, ' ');
+      var valid = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{2,60}$/.test(name);
+      if (!valid) {
+        showToast(fieldName + ': usá solo letras y espacios');
+        return null;
+      }
+      return name;
+    }
+
+    function validateDni(value) {
+      var dni = value.trim().toUpperCase();
+      if (!dni) return '';
+      if (!/^[A-Z0-9 -]{5,20}$/.test(dni)) {
+        showToast('Documento: usá letras, números, espacios o guiones');
+        return null;
+      }
+      return dni;
+    }
+
+    function validateEmail(value) {
+      var email = value.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        showToast('Email: ingresá un correo válido');
+        return null;
+      }
+      return email;
+    }
+
+    function normalizePhone(value) {
+      var raw = value.trim();
+      if (!raw) {
+        showToast('Teléfono: completá tu WhatsApp');
+        return null;
+      }
+      if (!/^[\d\s()+.-]+$/.test(raw)) {
+        showToast('Teléfono: usá números, espacios, +, guiones o paréntesis');
+        return null;
+      }
+
+      var digits = raw.replace(/\D/g, '');
+
+      if (raw.trim().charAt(0) === '+') {
+        if (digits.length < 8 || digits.length > 15) {
+          showToast('Teléfono: usá código internacional. Ej: +54 9 11 2294-2979');
+          return null;
+        }
+        return {
+          display: '+' + digits,
+          wa: digits
+        };
+      }
+
+      while (digits.charAt(0) === '0') digits = digits.slice(1);
+
+      if (digits.length < 8 || digits.length > 12) {
+        showToast('Teléfono: si es de Argentina poné 11 2294-2979. Si es de otro país, agregá +código');
+        return null;
+      }
+
+      if (digits.indexOf('54') === 0) {
+        if (digits.indexOf('549') !== 0) digits = '549' + digits.slice(2);
+      } else {
+        digits = '549' + digits;
+      }
+
+      return {
+        display: '+' + digits,
+        wa: digits
+      };
+    }
+
+    function setupInputGuards() {
+      ['reg-dni', 'profile-dni'].forEach(function(id) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('input', function() {
+          input.value = input.value.replace(/[^A-Za-z0-9 -]/g, '').toUpperCase().slice(0, 20);
+        });
+      });
+
+      ['reg-nombre', 'rep-nombre', 'sell-nombre', 'profile-nombre'].forEach(function(id) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('input', function() {
+          input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]/g, '');
+        });
+      });
+
+      ['reg-telefono', 'rep-telefono', 'sell-telefono', 'profile-telefono'].forEach(function(id) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('input', function() {
+          input.value = input.value.replace(/[^\d\s()+.-]/g, '');
+        });
+      });
+    }
+
+    function getStatusInfo(status) {
+      return REPAIR_STATUSES[status] || REPAIR_STATUSES.pendiente;
+    }
+
+    function getProductStatusInfo(status) {
+      return PRODUCT_STATUSES[status] || PRODUCT_STATUSES.disponible;
+    }
+
+    function getPurchaseStatusInfo(status) {
+      return PURCHASE_STATUSES[status] || PURCHASE_STATUSES.pendiente_pago;
+    }
+
+    function getSaleAdminStatusInfo(status) {
+      return SALE_ADMIN_STATUSES[status] || SALE_ADMIN_STATUSES.pendiente;
+    }
+
+    function seedDemoData() {
+      var users = getData(STORAGE_KEYS.users);
+      var repairs = getData(STORAGE_KEYS.repairs);
+      var hasDemoUser = users.some(function(user) { return user.email === 'cliente.demo@kench.com'; });
+      var hasDemoRepair = repairs.some(function(item) { return item.id === '#RDEMO'; });
+
+      if (!hasDemoUser) {
+        users.push({
+          id: 'demo-user',
+          nombre: 'Cliente de prueba',
+          dni: '12345678',
+          email: 'cliente.demo@kench.com',
+          telefono: '1123456789',
+          direccion: 'Villa Crespo',
+          password: '123456',
+          role: 'cliente',
+          creado: new Date().toISOString()
+        });
+        setData(STORAGE_KEYS.users, users);
+      }
+
+      if (!hasDemoRepair) {
+        repairs.unshift({
+          id: '#RDEMO',
+          userEmail: 'cliente.demo@kench.com',
+          nombre: 'Cliente de prueba',
+          telefono: '1123456789',
+          dispositivo: 'Tablet',
+          modelo: 'Modelo X',
+          descripcion: 'No carga y la pantalla parpadea',
+          estado: 'pendiente',
+          creado: new Date().toISOString()
+        });
+        setData(STORAGE_KEYS.repairs, repairs);
+      }
+    }
+
+    function clearDemoData() {
+      var users = getData(STORAGE_KEYS.users).filter(function(user) {
+        return user.email !== 'cliente.demo@kench.com';
+      });
+      var repairs = getData(STORAGE_KEYS.repairs).filter(function(item) {
+        return item.id !== '#RDEMO';
+      });
+      setData(STORAGE_KEYS.users, users);
+      setData(STORAGE_KEYS.repairs, repairs);
+    }
+
+    async function crearCuenta() {
+      var nombre = document.getElementById('reg-nombre').value.trim();
+      var dni = document.getElementById('reg-dni').value.trim();
+      var email = document.getElementById('reg-email').value.trim().toLowerCase();
+      var telefono = document.getElementById('reg-telefono').value.trim();
+      var direccion = document.getElementById('reg-direccion').value.trim();
+      var password = document.getElementById('reg-password').value;
+      var users = getData(STORAGE_KEYS.users);
+
+      await ensureSupabaseClient();
+
+      if (SUPABASE_REQUIRED && !supabaseClient) {
+        showToast('No se cargó Supabase. Revisá internet o abrí con servidor local.');
+        return;
+      }
+
+      if (!nombre || !email || !telefono || !password) {
+        showToast('Completá los campos obligatorios');
+        return;
+      }
+
+      nombre = validateName(nombre, 'Nombre');
+      if (!nombre) return;
+
+      dni = validateDni(dni);
+      if (dni === null) return;
+
+      var normalizedPhone = normalizePhone(telefono);
+      if (!normalizedPhone) return;
+      telefono = normalizedPhone.display;
+      document.getElementById('reg-telefono').value = telefono;
+
+      if (password.length < 6) {
+        showToast('La contraseña debe tener mínimo 6 caracteres');
+        return;
+      }
+
+      if (supabaseClient) {
+        var signup = await supabaseClient.auth.signUp({
+          email: email,
+          password: password,
+          options: { data: { nombre: nombre, dni: dni, telefono: telefono, direccion: direccion } }
+        });
+
+        if (signup.error) {
+          showToast(signup.error.message || 'No se pudo crear la cuenta');
+          return;
+        }
+
+        if (signup.data && signup.data.user) {
+          var profile = {
+            id: signup.data.user.id,
+            nombre: nombre,
+            email: email,
+            dni: dni,
+            telefono: telefono,
+            direccion: direccion,
+            role: 'cliente'
+          };
+          var profileSave = await supabaseClient.from('profiles').upsert(profile);
+          if (profileSave.error) {
+            showToast('Cuenta creada. Si Supabase pide confirmación, revisá el email.');
+            return;
+          }
+          setSession(mapProfile(profile, signup.data.user));
+          await renderAdmin();
+          showToast('Cuenta creada correctamente');
+          return;
+        }
+
+      }
+
+      if (users.some(function(user) { return user.email === email; })) {
+        showToast('Ese email ya está registrado');
+        return;
+      }
+
+      var user = {
+        id: Date.now(),
+        nombre: nombre,
+        dni: dni,
+        email: email,
+        telefono: telefono,
+        direccion: direccion,
+        password: password,
+        role: isAdminCredentials(email, password) ? 'admin' : 'cliente',
+        creado: new Date().toISOString()
+      };
+
+      users.push(user);
+      setData(STORAGE_KEYS.users, users);
+      setSession(user);
+      renderAdmin();
+      showToast('Cuenta creada correctamente');
+    }
+
+async function iniciarSesion() {
+      var email = document.getElementById('login-email').value.trim().toLowerCase();
+      var password = document.getElementById('login-password').value;
+
+      await ensureSupabaseClient();
+
+      if (SUPABASE_REQUIRED && !supabaseClient) {
+        showToast('No se cargó Supabase. Revisá internet o abrí con servidor local.');
+        return;
+      }
+
+      if (supabaseClient) {
+        var login = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (!login.error && login.data && login.data.user) {
+          var profileResult = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', login.data.user.id)
+            .single();
+
+          if (profileResult.error) {
+            var meta = login.data.user.user_metadata || {};
+            var fallbackProfile = {
+              id: login.data.user.id,
+              nombre: meta.nombre || 'Cliente',
+              email: login.data.user.email,
+              dni: meta.dni || '',
+              telefono: meta.telefono || '',
+              direccion: meta.direccion || '',
+              role: 'cliente'
+            };
+            var createdProfile = await supabaseClient.from('profiles').upsert(fallbackProfile).select().single();
+            if (createdProfile.error) {
+              showToast(createdProfile.error.message || 'No se pudo cargar el perfil');
+              return;
+            }
+            profileResult.data = createdProfile.data;
+          }
+
+          setSession(mapProfile(profileResult.data, login.data.user));
+          showToast(profileResult.data.role === 'admin' ? 'Sesión admin iniciada' : 'Sesión iniciada');
+          return;
+        }
+
+        if (login.error) {
+          if (email === ADMIN_EMAIL && login.error.message === 'Invalid login credentials') {
+            showToast('Admin: el email existe, pero la contraseña no coincide en Supabase');
+          } else {
+            showToast(login.error.message || 'No se pudo iniciar sesión');
+          }
+          return;
+        }
+      }
+
+      var users = getData(STORAGE_KEYS.users);
+      var user = users.find(function(item) {
+        return item.email === email && item.password === password;
+      });
+
+      if (!user && isAdminCredentials(email, password)) {
+        user = {
+          id: 'admin',
+          nombre: 'Kench al Rescate',
+          email: ADMIN_EMAIL,
+          telefono: 'Administrador',
+          direccion: '',
+          password: ADMIN_PASSWORD,
+          role: 'admin',
+          creado: new Date().toISOString()
+        };
+      }
+
+      if (!user) {
+        showToast('Email o contraseña incorrectos');
+        return;
+      }
+
+      user.role = isAdminCredentials(user.email, user.password) ? 'admin' : (user.role || 'cliente');
+      setSession(user);
+      showToast(user.role === 'admin' ? 'Sesión admin iniciada' : 'Sesión iniciada');
+    }
+
+async function cerrarSesion() {
+      await clearSession();
+      showToast('Sesión cerrada');
+    }
+
+    function loginGoogleDemo() {
+      showToast('Google se puede conectar cuando sumemos backend');
+    }
+
+    function updateSessionUI() {
+      var user = getSession();
+      var sessionBox = document.getElementById('session-box');
+      var authForms = document.getElementById('auth-forms');
+      var accountDashboard = document.getElementById('account-dashboard');
+      var adminButton = document.getElementById('admin-panel-btn');
+      var accountAdminButton = document.getElementById('account-admin-btn');
+
+      if (!sessionBox || !authForms) return;
+
+      if (user) {
+        document.getElementById('session-name').textContent = user.nombre;
+        document.getElementById('session-detail').textContent = user.email + ' · ' + user.telefono;
+        sessionBox.classList.add('show');
+        authForms.style.display = 'none';
+        if (accountDashboard) accountDashboard.classList.add('show');
+        var faq = document.getElementById('account-faq');
+        if (faq) faq.classList.add('show');
+        if (adminButton) adminButton.style.display = user.role === 'admin' ? 'inline-block' : 'none';
+        if (accountAdminButton) accountAdminButton.style.display = user.role === 'admin' ? 'block' : 'none';
+      } else {
+        sessionBox.classList.remove('show');
+        authForms.style.display = 'grid';
+        if (accountDashboard) accountDashboard.classList.remove('show');
+        var faqEmpty = document.getElementById('account-faq');
+        if (faqEmpty) faqEmpty.classList.remove('show');
+        if (adminButton) adminButton.style.display = 'none';
+        if (accountAdminButton) accountAdminButton.style.display = 'none';
+      }
+    }
+
+    function prefillContactForms(user) {
+      if (!user) return;
+      document.getElementById('rep-nombre').value = user.nombre || '';
+      document.getElementById('rep-telefono').value = user.telefono || '';
+      document.getElementById('rep-email').value = user.email || '';
+      document.getElementById('sell-nombre').value = user.nombre || '';
+      document.getElementById('sell-telefono').value = user.telefono || '';
+      fillProfileForm(user);
+    }
+
+    function fillProfileForm(user) {
+      if (!user) return;
+      var fields = {
+        'profile-client-id': user.id ? String(user.id).replace(/\D/g, '').slice(0, 6) || String(user.id).slice(0, 6) : '',
+        'profile-nombre': user.nombre || '',
+        'profile-dni': user.dni || '',
+        'profile-email': user.email || '',
+        'profile-telefono': user.telefono || '',
+        'profile-direccion': user.direccion || '',
+        'profile-localidad': 'Villa Crespo'
+      };
+      Object.keys(fields).forEach(function(id) {
+        var input = document.getElementById(id);
+        if (input) input.value = fields[id];
+      });
+    }
+
+    function showAccountPanel(name) {
+      document.querySelectorAll('.account-panel').forEach(function(panel) {
+        panel.classList.remove('show');
+      });
+      var panel = document.getElementById('account-panel-' + name);
+      if (panel) panel.classList.add('show');
+      document.querySelectorAll('.account-menu button').forEach(function(button) {
+        button.classList.remove('active');
+      });
+      var activeButton = document.querySelector('.account-menu button[onclick*="' + name + '"]');
+      if (activeButton) activeButton.classList.add('active');
+      renderAccountDashboard();
+    }
+
+    function renderFAQ(categoryId) {
+      var menu = document.getElementById('faq-menu');
+      var current = document.getElementById('faq-current');
+      var list = document.getElementById('faq-list');
+      if (!menu || !current || !list) return;
+
+      var active = FAQ_DATA.find(function(category) { return category.id === categoryId; }) || FAQ_DATA[0];
+
+      menu.innerHTML = FAQ_DATA.map(function(category) {
+        return '<button class="' + (category.id === active.id ? 'active' : '') + '" onclick="renderFAQ(\'' + category.id + '\')">'
+          + '<span>' + escapeHtml(category.title) + '</span>'
+          + '<span class="faq-count">' + category.items.length + '</span>'
+          + '</button>';
+      }).join('');
+
+      current.innerHTML = '<span>' + escapeHtml(active.title) + '</span><span class="faq-count">' + active.items.length + ' preguntas</span>';
+      list.innerHTML = active.items.map(function(item, index) {
+        return '<div class="faq-item">'
+          + '<button class="faq-question" onclick="toggleFAQItem(this)">'
+          + '<span>' + escapeHtml(item.q) + '</span>'
+          + '<span class="faq-plus">+</span>'
+          + '</button>'
+          + '<div class="faq-answer">' + escapeHtml(item.a) + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function toggleFAQItem(button) {
+      var item = button.closest('.faq-item');
+      if (!item) return;
+      item.classList.toggle('open');
+      var plus = item.querySelector('.faq-plus');
+      if (plus) plus.textContent = item.classList.contains('open') ? 'x' : '+';
+    }
+
+    async function guardarPerfil() {
+      var user = getSession();
+      if (!user || !user.id) {
+        showToast('Iniciá sesión para actualizar tus datos');
+        return;
+      }
+
+      var nombre = validateName(document.getElementById('profile-nombre').value, 'Nombre');
+      if (!nombre) return;
+
+      var dni = validateDni(document.getElementById('profile-dni').value);
+      if (dni === null) return;
+
+      var normalizedPhone = normalizePhone(document.getElementById('profile-telefono').value);
+      if (!normalizedPhone) return;
+
+      var profile = {
+        id: user.id,
+        nombre: nombre,
+        email: user.email,
+        dni: dni,
+        telefono: normalizedPhone.display,
+        direccion: document.getElementById('profile-direccion').value.trim(),
+        role: user.role || 'cliente'
+      };
+
+      if (supabaseClient) {
+        var result = await supabaseClient.from('profiles').update({
+          nombre: profile.nombre,
+          dni: profile.dni,
+          telefono: profile.telefono,
+          direccion: profile.direccion
+        }).eq('id', user.id).select().single();
+
+        if (result.error) {
+          showToast(result.error.message || 'No se pudieron guardar los datos');
+          return;
+        }
+        profile = mapProfile(result.data, { id: user.id, email: user.email });
+      }
+
+      setSession(Object.assign({}, user, profile));
+      showToast('Datos actualizados');
+    }
+
+    async function cambiarPassword() {
+      var user = getSession();
+      var newPassword = document.getElementById('new-password').value;
+      var confirmPassword = document.getElementById('confirm-password').value;
+
+      if (!user) {
+        showToast('Iniciá sesión para cambiar la contraseña');
+        return;
+      }
+
+      if (!newPassword || newPassword.length < 6) {
+        showToast('La contraseña debe tener mínimo 6 caracteres');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showToast('Las contraseñas no coinciden');
+        return;
+      }
+
+      await ensureSupabaseClient();
+
+      if (!supabaseClient) {
+        showToast('No se cargó Supabase. No se puede cambiar la contraseña.');
+        return;
+      }
+
+      var result = await supabaseClient.auth.updateUser({ password: newPassword });
+
+      if (result.error) {
+        showToast(result.error.message || 'No se pudo cambiar la contraseña');
+        return;
+      }
+
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+      showToast('Contraseña actualizada');
+    }
+
+    async function loadCurrentUserLists() {
+      var user = getSession();
+      if (!user || !user.id) return { repairs: [], purchases: [], sales: [] };
+
+      if (supabaseClient) {
+        var repairsResult = await supabaseClient.from('repairs').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        var purchasesResult = await supabaseClient.from('purchases').select('*, products(nombre, precio)').eq('user_id', user.id).order('created_at', { ascending: false });
+        var salesResult = await supabaseClient.from('sales').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        return {
+          repairs: repairsResult.error ? [] : repairsResult.data.map(mapRepair),
+          purchases: purchasesResult.error ? [] : purchasesResult.data.map(mapPurchase),
+          sales: salesResult.error ? [] : salesResult.data.map(mapSale)
+        };
+      }
+
+      return {
+        repairs: getData(STORAGE_KEYS.repairs).filter(function(item) { return item.userEmail === user.email || item.userId === user.id; }),
+        purchases: getData(STORAGE_KEYS.purchases).filter(function(item) { return item.email === user.email || item.userId === user.id; }),
+        sales: getData(STORAGE_KEYS.sales).filter(function(item) { return item.userEmail === user.email || item.userId === user.id; })
+      };
+    }
+
+    async function renderAccountDashboard() {
+      var user = getSession();
+      fillProfileForm(user);
+      if (!user) return;
+
+      var lists = await loadCurrentUserLists();
+      renderList('account-repairs-list', lists.repairs, function(item) {
+        var status = getStatusInfo(item.estado);
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(item.id) + ' · ' + escapeHtml(item.dispositivo) + '</span><span class="pill ' + status.pill + '">' + status.label + '</span></div>'
+          + '<div class="data-meta">Modelo: ' + escapeHtml(item.modelo || 'No especificado')
+          + '<br>Problema: ' + escapeHtml(item.descripcion || 'Sin descripción')
+          + '<br>Fecha: ' + formatDate(item.creado)
+          + '</div></div>';
+      }, 'Todavia no tenes reparaciones cargadas.');
+
+      renderList('account-purchases-list', lists.purchases, function(item) {
+        var status = getPurchaseStatusInfo(item.estado);
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(item.id) + ' · ' + escapeHtml(item.productName) + '</span><span class="pill ' + status.pill + '">' + status.label + '</span></div>'
+          + '<div class="data-meta">Precio: ' + formatMoney(item.productPrice)
+          + '<br>Fecha: ' + formatDate(item.creado)
+          + '</div></div>';
+      }, 'Todavia no tenes compras registradas.');
+
+      renderList('account-sales-list', lists.sales, function(item) {
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(item.id) + ' · ' + escapeHtml(item.tipo) + '</span><span>' + formatDate(item.creado) + '</span></div>'
+          + '<div class="data-meta">Modelo: ' + escapeHtml(item.modelo || 'No especificado')
+          + '<br>Estado: ' + escapeHtml(item.estado || 'No especificado')
+          + '<br>Detalles: ' + escapeHtml(item.descripcion || 'Sin detalles')
+          + '</div></div>';
+      }, 'Todavia no enviaste equipos para vender.');
     }
 
     function selectService(name) {
@@ -776,16 +3857,251 @@
       window.open('https://wa.me/' + numero + '?text=' + msg, '_blank');
     }
 
-    function enviarReparacion() {
+    function getFallbackProducts() {
+      var stored = getData(STORAGE_KEYS.products);
+      if (stored.length) return stored;
+      return [
+        { id: '#PLOCAL1', dbId: 'local-1', nombre: 'iPhone 11 64GB', precio: 320000, tipo: 'Celular', descripcion: 'Equipo disponible para consultar.', especificaciones: 'Capacidad: 64GB\nEstado: Revisado\nEntrega: Coordinada por WhatsApp\nGarantía: 30 días según condición del equipo', estado: 'disponible', creado: new Date().toISOString() },
+        { id: '#PLOCAL2', dbId: 'local-2', nombre: 'Samsung A52', precio: 195000, tipo: 'Celular', descripcion: 'Equipo disponible para consultar.', especificaciones: 'Pantalla: Revisada\nBatería: Funcionando\nEntrega: Coordinada por WhatsApp\nGarantía: 30 días según condición del equipo', estado: 'disponible', creado: new Date().toISOString() },
+        { id: '#PLOCAL3', dbId: 'local-3', nombre: 'Notebook Lenovo', precio: 580000, tipo: 'Notebook', descripcion: 'Equipo reservado.', especificaciones: 'Equipo: Notebook\nEstado: Reservado\nEntrega: Coordinada por WhatsApp', estado: 'reservado', creado: new Date().toISOString() },
+        { id: '#PLOCAL4', dbId: 'local-4', nombre: 'PS4 Slim 500GB', precio: 420000, tipo: 'Consola', descripcion: 'Equipo disponible para consultar.', especificaciones: 'Almacenamiento: 500GB\nEstado: Revisada\nIncluye: A confirmar por WhatsApp\nGarantía: 30 días según condición del equipo', estado: 'disponible', creado: new Date().toISOString() },
+        { id: '#PLOCAL5', dbId: 'local-5', nombre: 'iPad 9 Gen', precio: 410000, tipo: 'Tablet', descripcion: 'Equipo disponible para consultar.', especificaciones: 'Equipo: iPad 9 Gen\nEstado: Revisado\nEntrega: Coordinada por WhatsApp\nGarantía: 30 días según condición del equipo', estado: 'disponible', creado: new Date().toISOString() }
+      ];
+    }
+
+    function productImageMarkup(product, className) {
+      if (product.imagenUrl) {
+        return '<img src="' + escapeHtml(product.imagenUrl) + '" alt="' + escapeHtml(product.nombre) + '">';
+      }
+      return productIcon(product.tipo);
+    }
+
+    function productIcon(tipo) {
+      if (tipo === 'Notebook') return '<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>';
+      if (tipo === 'Tablet') return '<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/></svg>';
+      if (tipo === 'Consola') return '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="3"/><circle cx="17" cy="12" r="1"/></svg>';
+      return '<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
+    }
+
+    async function loadProducts(includeSold) {
+      if (supabaseClient) {
+        var query = supabaseClient.from('products').select('*').order('created_at', { ascending: false });
+        if (!includeSold) query = query.neq('estado', 'vendido');
+        var result = await query;
+        if (!result.error) return result.data.map(mapProduct);
+      }
+      return getFallbackProducts().filter(function(product) {
+        return includeSold || product.estado !== 'vendido';
+      });
+    }
+
+    async function renderProducts() {
+      var grid = document.getElementById('products-fallback');
+      if (!grid) return;
+      var products = await loadProducts(false);
+      grid.innerHTML = products.length
+        ? products.map(function(product) {
+            var status = getProductStatusInfo(product.estado);
+            return '<div class="product-card" onclick="abrirProducto(\'' + escapeHtml(product.id) + '\')">'
+              + '<div class="product-img">' + productImageMarkup(product) + '</div>'
+              + '<div class="product-info">'
+              + '<div class="product-name">' + escapeHtml(product.nombre) + '</div>'
+              + '<div class="product-price">' + formatMoney(product.precio) + '</div>'
+              + '<div class="product-status"><span class="pill ' + status.pill + '">' + status.label + '</span></div>'
+              + (product.descripcion ? '<div class="mini-muted" style="margin-top: 6px;">' + escapeHtml(product.descripcion) + '</div>' : '')
+              + '</div></div>';
+          }).join('')
+        : '<div class="mini-muted">Todavia no hay productos publicados.</div>';
+    }
+
+    async function abrirProducto(productId) {
+      var products = await loadProducts(false);
+      var product = products.find(function(item) { return item.id === productId || String(item.dbId) === String(productId); });
+      var modal = document.getElementById('product-modal');
+      var content = document.getElementById('product-modal-content');
+
+      if (!product || !modal || !content) {
+        showToast('No encontré ese producto');
+        return;
+      }
+
+      var status = getProductStatusInfo(product.estado);
+      var related = products.filter(function(item) {
+        return item.id !== product.id && item.estado !== 'vendido';
+      }).slice(0, 4);
+      var specs = product.especificaciones || 'Todavía no se cargaron especificaciones completas. Consultanos por WhatsApp y te pasamos todos los detalles.';
+      var buyAction = product.estado === 'disponible'
+        ? "consultarProducto('" + escapeHtml(product.id) + "')"
+        : "showToast('Este producto no esta disponible')";
+
+      content.innerHTML = '<div class="product-detail-layout">'
+        + '<div class="product-detail-media">' + productImageMarkup(product) + '</div>'
+        + '<div>'
+        + '<div class="product-detail-title">' + escapeHtml(product.nombre) + '</div>'
+        + '<div class="product-detail-price">' + formatMoney(product.precio) + '</div>'
+        + '<span class="pill ' + status.pill + '">' + status.label + '</span>'
+        + '<p class="panel-copy" style="margin-top: 12px;">' + escapeHtml(product.descripcion || 'Equipo publicado por Kench al Rescate. Consultá disponibilidad y forma de entrega por WhatsApp.') + '</p>'
+        + '<div class="product-benefits">'
+        + '<div class="product-benefit"><strong>Seguimiento por WhatsApp</strong> Coordinamos pago, entrega y dudas directamente.</div>'
+        + '<div class="product-benefit"><strong>Entrega a coordinar</strong> Retiro en Villa Crespo o envío según el producto.</div>'
+        + '<div class="product-benefit"><strong>Garantía</strong> Según condición del equipo y acuerdo de venta.</div>'
+        + '</div>'
+        + '<button class="btn-primary" style="width: 100%;" onclick="' + buyAction + '">Comprar / consultar</button>'
+        + '</div>'
+        + '</div>'
+        + '<div class="product-specs">'
+        + '<div class="product-specs-title">Especificaciones</div>'
+        + '<div class="product-specs-body">' + escapeHtml(specs) + '</div>'
+        + '</div>'
+        + (related.length ? '<div class="related-products"><div class="panel-title">Más equipos a la venta</div><div class="related-grid">'
+          + related.map(function(item) {
+            return '<div class="related-product" onclick="abrirProducto(\'' + escapeHtml(item.id) + '\')">'
+              + '<div class="related-thumb">' + productImageMarkup(item) + '</div>'
+              + '<div class="product-name">' + escapeHtml(item.nombre) + '</div>'
+              + '<div class="product-price">' + formatMoney(item.precio) + '</div>'
+              + '</div>';
+          }).join('')
+          + '</div></div>' : '');
+
+      modal.classList.add('show');
+    }
+
+    function cerrarProducto() {
+      document.getElementById('product-modal').classList.remove('show');
+    }
+
+    async function consultarProducto(producto) {
+      if (producto === 'un producto') {
+        var numeroGenerico = '54911122942979';
+        var msgGenerico = encodeURIComponent('Hola! Quiero consultar por equipos disponibles.');
+        window.open('https://wa.me/' + numeroGenerico + '?text=' + msgGenerico, '_blank');
+        return;
+      }
+
+      var activeUser = getSession();
+      if (supabaseClient && (!activeUser || !activeUser.id)) {
+        showToast('Iniciá sesión para consultar una compra');
+        switchTab('cuenta');
+        return;
+      }
+
+      var products = await loadProducts(true);
+      var selected = products.find(function(item) { return item.id === producto || String(item.dbId) === String(producto); });
+      if (!selected || selected.estado !== 'disponible') {
+        showToast('Ese producto no esta disponible');
+        return;
+      }
+
+      if (supabaseClient && activeUser && activeUser.id) {
+        var purchaseSave = await supabaseClient.from('purchases').insert({
+          user_id: activeUser.id,
+          product_id: selected.dbId,
+          nombre: activeUser.nombre,
+          email: activeUser.email,
+          telefono: activeUser.telefono,
+          estado: 'pendiente_pago'
+        }).select('id').single();
+
+        if (purchaseSave.error) {
+          showToast(purchaseSave.error.message || 'No se pudo registrar la compra');
+          return;
+        }
+      } else {
+        var purchases = getData(STORAGE_KEYS.purchases);
+        purchases.unshift({
+          id: '#C' + String(Date.now()).slice(-6),
+          productId: selected.dbId,
+          productName: selected.nombre,
+          productPrice: selected.precio,
+          nombre: activeUser ? activeUser.nombre : '',
+          email: activeUser ? activeUser.email : '',
+          telefono: activeUser ? activeUser.telefono : '',
+          estado: 'pendiente_pago',
+          creado: new Date().toISOString()
+        });
+        setData(STORAGE_KEYS.purchases, purchases);
+      }
+
+      var numero = '54911122942979';
+      var msg = encodeURIComponent('Hola! Me interesa comprar ' + selected.nombre + ' (' + formatMoney(selected.precio) + '). Quiero coordinar el pago.');
+      window.open('https://wa.me/' + numero + '?text=' + msg, '_blank');
+      await renderAdmin();
+      await renderAccountDashboard();
+      showToast('Compra registrada. Te contactamos para coordinar el pago.');
+    }
+
+    async function enviarReparacion() {
       var nombre = document.getElementById('rep-nombre').value.trim();
       var tel    = document.getElementById('rep-telefono').value.trim();
+      var email  = document.getElementById('rep-email').value.trim().toLowerCase();
       var disp   = document.getElementById('rep-dispositivo').value;
       var modelo = document.getElementById('rep-modelo').value.trim();
       var desc   = document.getElementById('rep-desc').value.trim();
 
-      if (!nombre || !tel || !disp) {
+      if (SUPABASE_REQUIRED && !supabaseClient) {
+        showToast('No se cargó Supabase. No se puede guardar el pedido.');
+        return;
+      }
+
+      if (!nombre || !tel || !email || !disp) {
         showToast('⚠️ Completá los campos obligatorios');
         return;
+      }
+
+      nombre = validateName(nombre, 'Nombre');
+      if (!nombre) return;
+
+      var normalizedPhone = normalizePhone(tel);
+      if (!normalizedPhone) return;
+      tel = normalizedPhone.display;
+      document.getElementById('rep-telefono').value = tel;
+
+      email = validateEmail(email);
+      if (!email) return;
+      document.getElementById('rep-email').value = email;
+
+      var activeUser = getSession();
+      var orderId = '';
+      if (supabaseClient && (!activeUser || !activeUser.id)) {
+        showToast('Iniciá sesión para guardar tu reparación');
+        switchTab('cuenta');
+        return;
+      }
+      if (supabaseClient && activeUser && activeUser.id) {
+        var repairSave = await supabaseClient.from('repairs').insert({
+          user_id: activeUser.id,
+          email: email,
+          nombre: nombre,
+          telefono: tel,
+          dispositivo: disp,
+          modelo: modelo,
+          descripcion: desc,
+          estado: 'pendiente'
+        }).select('id').single();
+
+        if (repairSave.error) {
+          showToast(repairSave.error.message || 'No se pudo guardar la reparación');
+          return;
+        }
+        orderId = '#R' + String(repairSave.data.id).padStart(5, '0');
+        await renderAdmin();
+      } else {
+      var repairs = getData(STORAGE_KEYS.repairs);
+      orderId = '#R' + String(Date.now()).slice(-6);
+      repairs.unshift({
+        id: orderId,
+        userEmail: (getSession() && getSession().email) || '',
+        email: email,
+        nombre: nombre,
+        telefono: tel,
+        dispositivo: disp,
+        modelo: modelo,
+        descripcion: desc,
+        estado: 'pendiente',
+        creado: new Date().toISOString()
+      });
+      setData(STORAGE_KEYS.repairs, repairs);
+      renderAdmin();
       }
 
       var numero = '54911122942979';
@@ -794,11 +4110,18 @@
               + '📞 Teléfono: ' + tel + '\n'
               + '📱 Dispositivo: ' + disp + (modelo ? ' — ' + modelo : '') + '\n'
               + '📝 Problema: ' + (desc || 'Sin descripción');
-      window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(msg), '_blank');
-      showToast('Redirigiendo a WhatsApp...');
+      var orderLine = 'Orden: ' + orderId + '\nEmail: ' + email + '\n';
+      window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(orderLine + msg), '_blank');
+      showToast('Pedido creado: ' + orderId);
+      document.getElementById('track-codigo').value = orderId;
+      var orderBox = document.getElementById('repair-order-result');
+      if (orderBox) {
+        orderBox.innerHTML = 'Tu pedido fue creado: <strong>' + escapeHtml(orderId) + '</strong>. Guardá este número para consultar el estado en Mi pedido.';
+        orderBox.style.display = 'block';
+      }
     }
 
-    function enviarVenta() {
+    async function enviarVenta() {
       var nombre = document.getElementById('sell-nombre').value.trim();
       var tel    = document.getElementById('sell-telefono').value.trim();
       var tipo   = document.getElementById('sell-tipo').value;
@@ -806,9 +4129,62 @@
       var estado = document.getElementById('sell-estado').value;
       var desc   = document.getElementById('sell-desc').value.trim();
 
+      if (SUPABASE_REQUIRED && !supabaseClient) {
+        showToast('No se cargó Supabase. No se puede guardar la venta.');
+        return;
+      }
+
       if (!nombre || !tel || !tipo) {
         showToast('⚠️ Completá los campos obligatorios');
         return;
+      }
+
+      nombre = validateName(nombre, 'Nombre');
+      if (!nombre) return;
+
+      var normalizedPhone = normalizePhone(tel);
+      if (!normalizedPhone) return;
+      tel = normalizedPhone.display;
+      document.getElementById('sell-telefono').value = tel;
+
+      var activeUser = getSession();
+      if (supabaseClient && (!activeUser || !activeUser.id)) {
+        showToast('Iniciá sesión para guardar tu venta');
+        switchTab('cuenta');
+        return;
+      }
+      if (supabaseClient && activeUser && activeUser.id) {
+        var saleSave = await supabaseClient.from('sales').insert({
+          user_id: activeUser.id,
+          nombre: nombre,
+          telefono: tel,
+          tipo: tipo,
+          modelo: modelo,
+          estado: estado,
+          descripcion: desc
+        });
+
+        if (saleSave.error) {
+          showToast(saleSave.error.message || 'No se pudo guardar la venta');
+          return;
+        }
+        await renderAdmin();
+      } else {
+      var sales = getData(STORAGE_KEYS.sales);
+      sales.unshift({
+        id: '#V' + String(Date.now()).slice(-6),
+        userEmail: (getSession() && getSession().email) || '',
+        nombre: nombre,
+        telefono: tel,
+        tipo: tipo,
+        modelo: modelo,
+        estado: estado,
+        estadoAdmin: 'pendiente',
+        descripcion: desc,
+        creado: new Date().toISOString()
+      });
+      setData(STORAGE_KEYS.sales, sales);
+      renderAdmin();
       }
 
       var numero = '54911122942979';
@@ -822,13 +4198,708 @@
       showToast('Redirigiendo a WhatsApp...');
     }
 
-    function buscarEstado() {
+    function entrarAdmin() {
+      switchTab('cuenta');
+      showToast('Iniciá sesión con la cuenta administradora');
+    }
+
+    function salirAdmin() {
+      cerrarSesion();
+      switchTab('cuenta');
+    }
+
+    function renderAdminRepairCard(item, completed) {
+      var status = getStatusInfo(item.estado);
+      var safeId = escapeHtml(item.id);
+      return '<div class="admin-repair-card">'
+        + '<div class="admin-repair-top">'
+        + '<div class="admin-repair-title"><span>' + escapeHtml(item.id) + ' · ' + escapeHtml(item.dispositivo) + '</span><small>' + formatDate(item.creado) + '</small></div>'
+        + '<span class="pill ' + status.pill + '">' + status.label + '</span>'
+        + '</div>'
+        + '<div class="admin-repair-info">'
+        + '<strong>' + escapeHtml(item.nombre) + '</strong><br>'
+        + escapeHtml(item.telefono)
+        + '<br>' + escapeHtml(item.email || item.userEmail || 'Email no cargado')
+        + '<br><strong>Modelo:</strong> ' + escapeHtml(item.modelo || 'No especificado')
+        + '<br><strong>Problema:</strong> ' + escapeHtml(item.descripcion || 'Sin descripción')
+        + '</div>'
+        + '<div class="admin-actions">'
+        + (completed
+          ? '<button class="status-btn amber" onclick="actualizarReparacion(\'' + safeId + '\', \'en_curso\')">Reabrir</button>'
+          : '<button class="status-btn red" onclick="actualizarReparacion(\'' + safeId + '\', \'pendiente\')">Pendiente</button>'
+            + '<button class="status-btn amber" onclick="actualizarReparacion(\'' + safeId + '\', \'en_curso\')">En curso</button>'
+            + '<button class="status-btn green" onclick="actualizarReparacion(\'' + safeId + '\', \'completado\')">Completado</button>')
+        + '<button class="status-btn" onclick="avisarReparacion(\'' + safeId + '\')">Avisar por WhatsApp</button>'
+        + '<button class="status-btn" onclick="verInfoCliente(\'' + safeId + '\')">Ver información completa</button>'
+        + '</div></div>';
+    }
+
+    async function renderAdmin() {
+      var isAdmin = isAdminSession();
+      var login = document.getElementById('admin-denied');
+      var content = document.getElementById('admin-content');
+
+      if (!login || !content) return;
+
+      login.style.display = isAdmin ? 'none' : 'block';
+      content.classList.toggle('show', isAdmin);
+      if (!isAdmin) return;
+
+      var users = getData(STORAGE_KEYS.users);
+      var repairs = getData(STORAGE_KEYS.repairs);
+      var sales = getData(STORAGE_KEYS.sales);
+      var products = getData(STORAGE_KEYS.products);
+      var purchases = getData(STORAGE_KEYS.purchases);
+
+      if (supabaseClient) {
+        var profilesResult = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        var repairsResult = await supabaseClient
+          .from('repairs')
+          .select('*')
+          .order('created_at', { ascending: false });
+        var salesResult = await supabaseClient
+          .from('sales')
+          .select('*')
+          .order('created_at', { ascending: false });
+        var productsResult = await supabaseClient
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+        var purchasesResult = await supabaseClient
+          .from('purchases')
+          .select('*, products(nombre, precio)')
+          .order('created_at', { ascending: false });
+
+        if (!profilesResult.error) {
+          users = profilesResult.data.map(function(profile) {
+            return mapProfile(profile, { id: profile.id, email: '' });
+          });
+        }
+        if (!repairsResult.error) repairs = repairsResult.data.map(mapRepair);
+        if (!salesResult.error) sales = salesResult.data.map(mapSale);
+        if (!productsResult.error) products = productsResult.data.map(mapProduct);
+        if (!purchasesResult.error) purchases = purchasesResult.data.map(mapPurchase);
+      }
+
+      var activeRepairs = repairs.filter(function(item) { return item.estado !== 'completado'; });
+      var completedRepairs = repairs.filter(function(item) { return item.estado === 'completado'; });
+      var pendingSales = sales.filter(function(item) { return (item.estadoAdmin || item.estado_admin || 'pendiente') === 'pendiente'; });
+      var acceptedSales = sales.filter(function(item) { return (item.estadoAdmin || item.estado_admin) === 'aceptado'; });
+      var rejectedSales = sales.filter(function(item) { return (item.estadoAdmin || item.estado_admin) === 'rechazado'; });
+
+      document.getElementById('admin-users-count').textContent = users.length;
+      document.getElementById('admin-repairs-count').textContent = activeRepairs.length;
+      document.getElementById('admin-sales-count').textContent = sales.length;
+      document.getElementById('admin-products-count').textContent = products.length;
+      document.getElementById('admin-purchases-count').textContent = purchases.filter(function(item) { return item.estado === 'pendiente_pago'; }).length;
+      var activeCount = document.getElementById('admin-active-repairs-count');
+      var completedCount = document.getElementById('admin-completed-repairs-count');
+      var pendingSalesCount = document.getElementById('admin-pending-sales-count');
+      var acceptedSalesCount = document.getElementById('admin-accepted-sales-count');
+      var rejectedSalesCount = document.getElementById('admin-rejected-sales-count');
+      if (activeCount) activeCount.textContent = activeRepairs.length + (activeRepairs.length === 1 ? ' activa' : ' activas');
+      if (completedCount) completedCount.textContent = completedRepairs.length + (completedRepairs.length === 1 ? ' completada' : ' completadas');
+      if (pendingSalesCount) pendingSalesCount.textContent = pendingSales.length + (pendingSales.length === 1 ? ' pendiente' : ' pendientes');
+      if (acceptedSalesCount) acceptedSalesCount.textContent = acceptedSales.length + (acceptedSales.length === 1 ? ' aceptada' : ' aceptadas');
+      if (rejectedSalesCount) rejectedSalesCount.textContent = rejectedSales.length + (rejectedSales.length === 1 ? ' rechazada' : ' rechazadas');
+
+      var visibleUsers = users.slice(0, 3);
+      var hiddenUsers = users.slice(3);
+      var visibleUsersCount = document.getElementById('admin-visible-users-count');
+      var hiddenUsersCount = document.getElementById('admin-hidden-users-count');
+      var usersFolder = document.getElementById('admin-users-folder');
+      if (visibleUsersCount) visibleUsersCount.textContent = visibleUsers.length + (visibleUsers.length === 1 ? ' visible' : ' visibles');
+      if (hiddenUsersCount) hiddenUsersCount.textContent = hiddenUsers.length + (hiddenUsers.length === 1 ? ' restante' : ' restantes');
+      if (usersFolder) usersFolder.style.display = hiddenUsers.length ? 'block' : 'none';
+
+      function renderAdminUser(user) {
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(user.nombre) + '</span><span>' + formatDate(user.creado) + '</span></div>'
+          + '<div class="data-meta">Email: ' + escapeHtml(user.email) + '<br>WhatsApp: ' + escapeHtml(user.telefono)
+          + (user.dni ? '<br>DNI: ' + escapeHtml(user.dni) : '')
+          + (user.direccion ? '<br>Dirección: ' + escapeHtml(user.direccion) : '')
+          + '</div></div>';
+      }
+
+      renderList('admin-users-list', visibleUsers, renderAdminUser, 'Todavía no hay usuarios registrados.');
+      renderList('admin-users-extra-list', hiddenUsers, renderAdminUser, 'No hay más usuarios.');
+
+      renderList('admin-repairs-active-list', activeRepairs, function(item) {
+        return renderAdminRepairCard(item, false);
+      }, 'No hay reparaciones pendientes ni en curso.');
+
+      renderList('admin-repairs-completed-list', completedRepairs, function(item) {
+        return renderAdminRepairCard(item, true);
+      }, 'Todavía no hay reparaciones completadas.');
+
+      renderList('admin-repairs-list', repairs, function(item) {
+        var status = getStatusInfo(item.estado);
+        var safeId = escapeHtml(item.id);
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(item.id) + ' · ' + escapeHtml(item.dispositivo) + '</span><span>' + formatDate(item.creado) + '</span></div>'
+          + '<div class="data-meta">Cliente: ' + escapeHtml(item.nombre) + ' · ' + escapeHtml(item.telefono)
+          + '<br>Email: ' + escapeHtml(item.email || item.userEmail || 'No cargado')
+          + '<br><span class="pill ' + status.pill + '">' + status.label + '</span>'
+          + '<br>Modelo: ' + escapeHtml(item.modelo || 'No especificado')
+          + '<br>Problema: ' + escapeHtml(item.descripcion || 'Sin descripción')
+          + '<br>Fecha: ' + formatDate(item.creado)
+          + '</div>'
+          + '<div class="admin-actions">'
+          + '<button class="status-btn red" onclick="actualizarReparacion(\'' + safeId + '\', \'pendiente\')">Pendiente</button>'
+          + '<button class="status-btn amber" onclick="actualizarReparacion(\'' + safeId + '\', \'en_curso\')">En curso</button>'
+          + '<button class="status-btn green" onclick="actualizarReparacion(\'' + safeId + '\', \'completado\')">Completado</button>'
+          + '<button class="status-btn" onclick="avisarReparacion(\'' + safeId + '\')">Avisar por WhatsApp</button>'
+          + '<button class="status-btn" onclick="verInfoCliente(\'' + safeId + '\')">Ver información completa</button>'
+          + '</div></div>';
+      }, 'Todavía no hay solicitudes de reparación.');
+
+      function renderAdminSale(item) {
+        var adminStatus = getSaleAdminStatusInfo(item.estadoAdmin || item.estado_admin || 'pendiente');
+        var safeId = escapeHtml(item.id);
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(item.id) + ' · ' + escapeHtml(item.tipo) + '</span><span class="pill ' + adminStatus.pill + '">' + adminStatus.label + '</span></div>'
+          + '<div class="data-meta">Cliente: ' + escapeHtml(item.nombre) + ' · ' + escapeHtml(item.telefono)
+          + '<br>Modelo: ' + escapeHtml(item.modelo || 'No especificado')
+          + '<br>Estado del equipo: ' + escapeHtml(item.estado || 'No especificado')
+          + '<br>Detalles: ' + escapeHtml(item.descripcion || 'Sin detalles')
+          + '<br>Fecha: ' + formatDate(item.creado)
+          + '</div>'
+          + '<div class="admin-actions">'
+          + '<button class="status-btn green" onclick="actualizarVenta(\'' + safeId + '\', \'aceptado\')">Aceptado</button>'
+          + '<button class="status-btn red" onclick="actualizarVenta(\'' + safeId + '\', \'rechazado\')">Rechazado</button>'
+          + '<button class="status-btn amber" onclick="actualizarVenta(\'' + safeId + '\', \'pendiente\')">Pendiente</button>'
+          + '</div></div>';
+      }
+
+      renderList('admin-sales-list', pendingSales, renderAdminSale, 'No hay equipos pendientes de revisar.');
+      renderList('admin-sales-accepted-list', acceptedSales, renderAdminSale, 'Todavía no hay ofertas aceptadas.');
+      renderList('admin-sales-rejected-list', rejectedSales, renderAdminSale, 'Todavía no hay ofertas rechazadas.');
+
+      renderList('admin-products-list', products, function(item) {
+        var status = getProductStatusInfo(item.estado);
+        var safeId = escapeHtml(item.id);
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(item.id) + ' - ' + escapeHtml(item.nombre) + '</span><span class="pill ' + status.pill + '">' + status.label + '</span></div>'
+          + '<div class="data-meta">Tipo: ' + escapeHtml(item.tipo)
+          + '<br>Precio: ' + formatMoney(item.precio)
+          + '<br>Descripción: ' + escapeHtml(item.descripcion || 'Sin descripción')
+          + '</div>'
+          + '<div class="admin-actions">'
+          + '<button class="status-btn green" onclick="actualizarProducto(\'' + safeId + '\', \'disponible\')">Disponible</button>'
+          + '<button class="status-btn amber" onclick="actualizarProducto(\'' + safeId + '\', \'reservado\')">Reservado</button>'
+          + '<button class="status-btn red" onclick="actualizarProducto(\'' + safeId + '\', \'vendido\')">Vendido</button>'
+          + '</div></div>';
+      }, 'Todavia no hay productos publicados.');
+
+      renderList('admin-purchases-list', purchases, function(item) {
+        var status = getPurchaseStatusInfo(item.estado);
+        var safeId = escapeHtml(item.id);
+        return '<div class="data-item">'
+          + '<div class="data-head"><span>' + escapeHtml(item.id) + ' - ' + escapeHtml(item.productName) + '</span><span class="pill ' + status.pill + '">' + status.label + '</span></div>'
+          + '<div class="data-meta">Cliente: ' + escapeHtml(item.nombre) + ' - ' + escapeHtml(item.telefono)
+          + '<br>Email: ' + escapeHtml(item.email || 'No cargado')
+          + '<br>Precio: ' + formatMoney(item.productPrice)
+          + '<br>Fecha: ' + formatDate(item.creado)
+          + '</div>'
+          + '<div class="admin-actions">'
+          + '<button class="status-btn green" onclick="confirmarCompra(\'' + safeId + '\')">Pago confirmado</button>'
+          + '<button class="status-btn red" onclick="cancelarCompra(\'' + safeId + '\')">Cancelar</button>'
+          + '<button class="status-btn" onclick="avisarCompra(\'' + safeId + '\')">Avisar por WhatsApp</button>'
+          + '</div></div>';
+      }, 'Todavia no hay compras registradas.');
+    }
+
+    function toggleProductForm() {
+      var form = document.getElementById('product-form');
+      if (form) form.classList.toggle('show');
+    }
+
+    async function guardarProducto() {
+      if (!isAdminSession()) {
+        showToast('Solo el admin puede cargar productos');
+        return;
+      }
+
+      var nombre = document.getElementById('product-nombre').value.trim();
+      var precio = Number(document.getElementById('product-precio').value || 0);
+      var tipo = document.getElementById('product-tipo').value;
+      var estado = document.getElementById('product-estado').value;
+      var descripcion = document.getElementById('product-desc').value.trim();
+      var imagenUrl = document.getElementById('product-imagen').value.trim();
+      var especificaciones = document.getElementById('product-specs').value.trim();
+
+      if (!nombre || !precio) {
+        showToast('Completa nombre y precio del producto');
+        return;
+      }
+
+      if (supabaseClient) {
+        var result = await supabaseClient.from('products').insert({
+          nombre: nombre,
+          precio: precio,
+          tipo: tipo,
+          estado: estado,
+          descripcion: descripcion,
+          imagen_url: imagenUrl,
+          especificaciones: especificaciones
+        });
+
+        if (result.error) {
+          showToast(result.error.message || 'No se pudo guardar el producto');
+          return;
+        }
+      } else {
+        var products = getData(STORAGE_KEYS.products);
+        products.unshift({
+          id: '#P' + String(Date.now()).slice(-6),
+          dbId: Date.now(),
+          nombre: nombre,
+          precio: precio,
+          tipo: tipo,
+          estado: estado,
+          descripcion: descripcion,
+          imagenUrl: imagenUrl,
+          especificaciones: especificaciones,
+          creado: new Date().toISOString()
+        });
+        setData(STORAGE_KEYS.products, products);
+      }
+
+      document.getElementById('product-nombre').value = '';
+      document.getElementById('product-precio').value = '';
+      document.getElementById('product-imagen').value = '';
+      document.getElementById('product-desc').value = '';
+      document.getElementById('product-specs').value = '';
+      await renderProducts();
+      await renderAdmin();
+      showToast('Producto publicado');
+    }
+
+    async function actualizarProducto(id, estado) {
+      var dbId = parseDbId(id);
+      if (supabaseClient) {
+        var result = await supabaseClient
+          .from('products')
+          .update({ estado: estado, updated_at: new Date().toISOString() })
+          .eq('id', dbId);
+
+        if (result.error) {
+          showToast(result.error.message || 'No se pudo actualizar el producto');
+          return;
+        }
+      } else {
+        var products = getData(STORAGE_KEYS.products);
+        var product = products.find(function(item) { return item.id === id; });
+        if (product) product.estado = estado;
+        setData(STORAGE_KEYS.products, products);
+      }
+
+      await renderProducts();
+      await renderAdmin();
+      showToast('Producto actualizado');
+    }
+
+    async function actualizarVenta(id, estadoAdmin) {
+      var dbId = parseDbId(id);
+      if (supabaseClient) {
+        var result = await supabaseClient
+          .from('sales')
+          .update({ estado_admin: estadoAdmin })
+          .eq('id', dbId);
+
+        if (result.error) {
+          showToast(result.error.message || 'No se pudo actualizar la oferta');
+          return;
+        }
+      } else {
+        var sales = getData(STORAGE_KEYS.sales);
+        var sale = sales.find(function(item) { return item.id === id; });
+        if (sale) sale.estadoAdmin = estadoAdmin;
+        setData(STORAGE_KEYS.sales, sales);
+      }
+
+      await renderAdmin();
+      showToast('Oferta actualizada');
+    }
+
+    async function updatePurchaseStatus(id, estado) {
+      var dbId = parseDbId(id);
+      if (supabaseClient) {
+        var purchaseResult = await supabaseClient
+          .from('purchases')
+          .select('*, products(nombre, precio)')
+          .eq('id', dbId)
+          .single();
+
+        if (purchaseResult.error || !purchaseResult.data) {
+          showToast('No encontre esa compra');
+          return null;
+        }
+
+        var updateResult = await supabaseClient
+          .from('purchases')
+          .update({ estado: estado, updated_at: new Date().toISOString() })
+          .eq('id', dbId);
+
+        if (updateResult.error) {
+          showToast(updateResult.error.message || 'No se pudo actualizar la compra');
+          return null;
+        }
+
+        if (estado === 'confirmado' && purchaseResult.data.product_id) {
+          await supabaseClient
+            .from('products')
+            .update({ estado: 'vendido', updated_at: new Date().toISOString() })
+            .eq('id', purchaseResult.data.product_id);
+        }
+
+        return mapPurchase(Object.assign({}, purchaseResult.data, { estado: estado }));
+      }
+
+      var purchases = getData(STORAGE_KEYS.purchases);
+      var purchase = purchases.find(function(item) { return item.id === id; });
+      if (!purchase) {
+        showToast('No encontre esa compra');
+        return null;
+      }
+      purchase.estado = estado;
+      purchase.actualizado = new Date().toISOString();
+      setData(STORAGE_KEYS.purchases, purchases);
+      return purchase;
+    }
+
+    async function confirmarCompra(id) {
+      var purchase = await updatePurchaseStatus(id, 'confirmado');
+      if (!purchase) return;
+      await renderProducts();
+      await renderAdmin();
+      await avisarCompra(id);
+      showToast('Compra confirmada y producto marcado como vendido');
+    }
+
+    async function cancelarCompra(id) {
+      var purchase = await updatePurchaseStatus(id, 'cancelado');
+      if (!purchase) return;
+      await renderAdmin();
+      await avisarCompra(id);
+      showToast('Compra cancelada');
+    }
+
+    async function avisarCompra(id) {
+      var dbId = parseDbId(id);
+      var purchase = null;
+
+      if (supabaseClient) {
+        var result = await supabaseClient
+          .from('purchases')
+          .select('*, products(nombre, precio)')
+          .eq('id', dbId)
+          .single();
+        if (!result.error && result.data) purchase = mapPurchase(result.data);
+      } else {
+        purchase = getData(STORAGE_KEYS.purchases).find(function(item) { return item.id === id; });
+      }
+
+      if (!purchase) {
+        showToast('No encontre esa compra');
+        return;
+      }
+
+      var telefono = String(purchase.telefono || '').replace(/\D/g, '');
+      if (!telefono) {
+        showToast('La compra no tiene telefono');
+        return;
+      }
+      if (telefono.indexOf('54') !== 0) telefono = '549' + telefono;
+
+      var status = getPurchaseStatusInfo(purchase.estado);
+      var msg = 'Hola ' + purchase.nombre + '! Tu compra ' + purchase.id + ' por ' + purchase.productName + ' esta: ' + status.label + '.\n\nKench al Rescate';
+      window.open('https://wa.me/' + telefono + '?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    async function actualizarReparacion(id, estado) {
+      if (supabaseClient && isAdminSession() && id !== '#RDEMO') {
+        var dbId = parseDbId(id);
+        var updateResult = await supabaseClient
+          .from('repairs')
+          .update({ estado: estado, updated_at: new Date().toISOString() })
+          .eq('id', dbId);
+
+        if (updateResult.error) {
+          showToast(updateResult.error.message || 'No se pudo actualizar');
+          return;
+        }
+        await renderAdmin();
+        await avisarReparacion(id);
+        return;
+      }
+
+      var repairs = getData(STORAGE_KEYS.repairs);
+      var repair = repairs.find(function(item) { return item.id === id; });
+
+      if (!repair) {
+        showToast('No encontré esa reparación');
+        return;
+      }
+
+      repair.estado = estado;
+      repair.actualizado = new Date().toISOString();
+      setData(STORAGE_KEYS.repairs, repairs);
+      renderAdmin();
+      avisarReparacion(id);
+    }
+
+    async function avisarReparacion(id) {
+      var repairs = getData(STORAGE_KEYS.repairs);
+      var repair = repairs.find(function(item) { return item.id === id; });
+
+      if (!repair && supabaseClient) {
+        var dbId = parseDbId(id);
+        var repairResult = await supabaseClient
+          .from('repairs')
+          .select('*')
+          .eq('id', dbId)
+          .single();
+        if (!repairResult.error && repairResult.data) repair = mapRepair(repairResult.data);
+      }
+
+      if (!repair) {
+        showToast('No encontré esa reparación');
+        return;
+      }
+
+      var status = getStatusInfo(repair.estado);
+      var telefono = String(repair.telefono || '').replace(/\D/g, '');
+      if (!telefono) {
+        showToast('El pedido no tiene teléfono');
+        return;
+      }
+      if (telefono.indexOf('54') !== 0) telefono = '549' + telefono;
+
+      var msg = 'Hola ' + repair.nombre + '! Tu reparación ' + repair.id
+        + ' (' + repair.dispositivo + (repair.modelo ? ' - ' + repair.modelo : '') + ') está: '
+        + status.label + '.\n\nKench al Rescate';
+
+      window.open('https://wa.me/' + telefono + '?text=' + encodeURIComponent(msg), '_blank');
+      showToast('Abriendo aviso por WhatsApp...');
+    }
+
+    async function verInfoCliente(id) {
+      var repairs = getData(STORAGE_KEYS.repairs);
+      var users = getData(STORAGE_KEYS.users);
+      var repair = repairs.find(function(item) { return item.id === id; });
+      var modal = document.getElementById('client-modal');
+      var content = document.getElementById('client-modal-content');
+
+      if (!repair && supabaseClient) {
+        var dbId = parseDbId(id);
+        var repairResult = await supabaseClient
+          .from('repairs')
+          .select('*')
+          .eq('id', dbId)
+          .single();
+        if (!repairResult.error && repairResult.data) repair = mapRepair(repairResult.data);
+      }
+
+      if (!repair || !modal || !content) {
+        showToast('No encontré la información');
+        return;
+      }
+
+      var user = users.find(function(item) {
+        return item.id === repair.userId || item.email === repair.userEmail || item.telefono === repair.telefono;
+      }) || {};
+
+      if (supabaseClient && repair.userId) {
+        var profileResult = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', repair.userId)
+          .single();
+        if (!profileResult.error && profileResult.data) user = mapProfile(profileResult.data, { id: profileResult.data.id, email: '' });
+      }
+      var status = getStatusInfo(repair.estado);
+
+      content.innerHTML =
+        detailItem('Nombre', repair.nombre || user.nombre)
+        + detailItem('Email', repair.email || user.email || repair.userEmail || 'No registrado')
+        + detailItem('WhatsApp', repair.telefono || user.telefono)
+        + detailItem('DNI', user.dni || 'No cargado')
+        + detailItem('Dirección / zona', user.direccion || 'No cargada', true)
+        + detailItem('Orden', repair.id)
+        + detailItem('Estado', '<span class="pill ' + status.pill + '">' + status.label + '</span>')
+        + detailItem('Dispositivo', repair.dispositivo)
+        + detailItem('Modelo', repair.modelo || 'No especificado')
+        + detailItem('Problema informado', repair.descripcion || 'Sin descripción', true)
+        + detailItem('Fecha de solicitud', formatDate(repair.creado))
+        + detailItem('Última actualización', repair.actualizado ? formatDate(repair.actualizado) : 'Sin cambios');
+
+      modal.classList.add('show');
+    }
+
+    function detailItem(label, value, full) {
+      return '<div class="detail-item' + (full ? ' full' : '') + '">'
+        + '<div class="detail-label">' + escapeHtml(label) + '</div>'
+        + '<div class="detail-value">' + (String(value || '').indexOf('<span') === 0 ? value : escapeHtml(value || 'No cargado')) + '</div>'
+        + '</div>';
+    }
+
+    function cerrarInfoCliente() {
+      document.getElementById('client-modal').classList.remove('show');
+    }
+
+    async function initSupabaseSession() {
+      await ensureSupabaseClient();
+
+      if (supabaseClient) {
+        var sessionResult = await supabaseClient.auth.getSession();
+        var authUser = sessionResult.data && sessionResult.data.session
+          ? sessionResult.data.session.user
+          : null;
+
+        if (authUser) {
+          var profileResult = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+          if (!profileResult.error && profileResult.data) {
+            setSession(mapProfile(profileResult.data, authUser));
+            return;
+          }
+        }
+      }
+
+      var user = getSession();
+      updateSessionUI();
+      prefillContactForms(user);
+      await renderAdmin();
+      await renderProducts();
+      await renderAccountDashboard();
+      await updateStats();
+      renderFAQ();
+    }
+
+    function renderList(id, items, template, emptyText) {
+      var node = document.getElementById(id);
+      if (!node) return;
+      node.innerHTML = items.length
+        ? items.map(template).join('')
+        : '<div class="mini-muted">' + emptyText + '</div>';
+    }
+
+async function buscarEstado() {
       var codigo = document.getElementById('track-codigo').value.trim();
       if (!codigo) {
         showToast('⚠️ Ingresá tu número de orden o teléfono');
         return;
       }
+
+      var repair = null;
+      var activeUser = getSession();
+
+      if (supabaseClient) {
+        if (!activeUser || !activeUser.id) {
+          showToast('Iniciá sesión para consultar tu pedido');
+          switchTab('cuenta');
+          return;
+        }
+
+        var query = supabaseClient.from('repairs').select('*').limit(1);
+
+        if (codigo.charAt(0) === '#') {
+          var dbId = parseDbId(codigo);
+          if (!dbId) {
+            showToast('Número de orden inválido');
+            return;
+          }
+          query = query.eq('id', dbId);
+        } else {
+          var normalizedPhone = normalizePhone(codigo);
+          if (!normalizedPhone) return;
+          document.getElementById('track-codigo').value = normalizedPhone.display;
+          query = query.eq('telefono', normalizedPhone.display);
+        }
+
+        var result = await query;
+        if (result.error) {
+          showToast(result.error.message || 'No se pudo buscar el pedido');
+          return;
+        }
+
+        if (result.data && result.data.length) repair = mapRepair(result.data[0]);
+      } else {
+        var repairs = getData(STORAGE_KEYS.repairs);
+        repair = repairs.find(function(item) {
+          return item.id.toLowerCase() === codigo.toLowerCase() || item.telefono === codigo;
+        });
+      }
+
+      if (!repair) {
+        showToast('No encontramos un pedido con esos datos');
+        document.getElementById('track-result').style.display = 'none';
+        return;
+      }
+
+      renderTrackResult(repair);
       document.getElementById('track-result').style.display = 'block';
+    }
+
+    function renderTrackResult(repair) {
+      var status = getStatusInfo(repair.estado);
+      var result = document.getElementById('track-result');
+      result.innerHTML = '<div class="track-card">'
+        + '<div class="track-header">'
+        + '<div>'
+        + '<div style="font-size: 14px; font-weight: 700;">' + escapeHtml(repair.id) + ' — ' + escapeHtml(repair.dispositivo) + '</div>'
+        + '<div style="font-size: 12px; color: var(--color-muted); margin-top: 2px;">' + escapeHtml(repair.modelo || 'Modelo no especificado') + '</div>'
+        + '</div>'
+        + '<span class="pill ' + status.pill + '">' + status.label + '</span>'
+        + '</div>'
+        + '<div class="data-meta" style="margin-bottom: 1rem;">'
+        + 'Cliente: ' + escapeHtml(repair.nombre)
+        + '<br>Email: ' + escapeHtml(repair.email || 'No cargado')
+        + '<br>Problema: ' + escapeHtml(repair.descripcion || 'Sin descripción')
+        + '<br>Fecha: ' + formatDate(repair.creado)
+        + '</div>'
+        + '<div class="track-steps">' + renderTrackSteps(repair.estado) + '</div>'
+        + '</div>';
+    }
+
+    function renderTrackSteps(status) {
+      var steps = [
+        { key: 'pendiente', label: 'Solicitud recibida' },
+        { key: 'en_curso', label: 'Reparación en curso' },
+        { key: 'completado', label: 'Listo / completado' }
+      ];
+      var currentIndex = Math.max(0, steps.findIndex(function(step) { return step.key === status; }));
+
+      return steps.map(function(step, index) {
+        var done = index <= currentIndex;
+        return '<div class="track-step">'
+          + '<div class="step-dot ' + (done ? 'done' : 'pend') + '"></div>'
+          + '<div class="step-text"' + (done ? '' : ' style="color: var(--color-muted);"') + '>' + step.label + '</div>'
+          + (done ? '<div class="step-date">' + (index === currentIndex ? 'Actual' : 'Hecho') + '</div>' : '')
+          + '</div>';
+      }).join('');
+    }
+
+    async function updateStats() {
+      var repairsCount = getData(STORAGE_KEYS.repairs).length;
+      if (supabaseClient) {
+        var result = await supabaseClient.from('repairs').select('id', { count: 'exact', head: true });
+        if (!result.error && typeof result.count === 'number') repairsCount = result.count;
+      }
+
+      var statRepairs = document.getElementById('stat-repairs');
+      var statTime = document.getElementById('stat-time');
+      var statSatisfaction = document.getElementById('stat-satisfaction');
+      if (statRepairs) statRepairs.textContent = '+' + Math.max(500, 500 + repairsCount);
+      if (statTime) statTime.textContent = '48h';
+      if (statSatisfaction) statSatisfaction.textContent = '98%';
     }
 
     function showToast(msg) {
@@ -837,6 +4908,18 @@
       t.classList.add('show');
       setTimeout(function() { t.classList.remove('show'); }, 2800);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+      setupMusic();
+      setupInputGuards();
+      clearDemoData();
+      document.getElementById('track-result').innerHTML = '';
+      initSupabaseSession();
+      renderProducts();
+      updateStats();
+      renderFAQ();
+    });
   </script>
 </body>
 </html>
