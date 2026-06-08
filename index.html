@@ -2057,7 +2057,7 @@
     </nav>
   </header>
 
-  <audio id="site-music" src="periTune_Village_Fete-chosic.com_.mp3" loop preload="none"></audio>
+  <audio id="site-music" src="village-fete.mp3" loop preload="none"></audio>
 
   <div class="hero">
     <div class="hero-content">
@@ -3097,7 +3097,8 @@
           await audio.play();
           updateMusicButton(true);
         } catch (error) {
-          showToast('El navegador bloqueó la música. Tocá de nuevo para reproducir.');
+          var missingFile = audio.error && (audio.error.code === 4 || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE);
+          showToast(missingFile ? 'No se encontró el archivo de música en el sitio.' : 'El navegador bloqueó la música. Tocá de nuevo para reproducir.');
         }
       } else {
         audio.pause();
