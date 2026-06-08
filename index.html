@@ -2051,13 +2051,15 @@
         <li><a href="#" onclick="switchTab('vender')">Vender</a></li>
         <li><a href="#" onclick="switchTab('cuenta')">Cuenta</a></li>
         <li><a href="https://wa.me/54911122942979" target="_blank">WhatsApp</a></li>
-        <li><button class="music-toggle" id="music-toggle" onclick="toggleMusic()" aria-label="Activar música"></button></li>
-        <li><button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar modo">☾</button></li>
+        <li><button type="button" class="music-toggle" id="music-toggle" onclick="toggleMusic()" aria-label="Activar música"></button></li>
+        <li><button type="button" class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar modo">☾</button></li>
       </ul>
     </nav>
   </header>
 
-  <audio id="site-music" src="village-fete.mp3" loop preload="none"></audio>
+  <audio id="site-music" loop preload="auto">
+    <source src="village-fete.mp3" type="audio/mpeg">
+  </audio>
 
   <div class="hero">
     <div class="hero-content">
@@ -3074,6 +3076,7 @@
       var audio = document.getElementById('site-music');
       if (!audio) return;
       audio.volume = 0.05;
+      audio.muted = false;
       updateMusicButton(false);
     }
 
@@ -3091,14 +3094,16 @@
       var audio = document.getElementById('site-music');
       if (!audio) return;
       audio.volume = 0.05;
+      audio.muted = false;
 
       if (audio.paused) {
         try {
+          if (audio.readyState === 0) audio.load();
           await audio.play();
           updateMusicButton(true);
         } catch (error) {
           var missingFile = audio.error && (audio.error.code === 4 || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE);
-          showToast(missingFile ? 'No se encontró el archivo de música en el sitio.' : 'El navegador bloqueó la música. Tocá de nuevo para reproducir.');
+          showToast(missingFile ? 'No se encontró el archivo de música en el sitio.' : 'No se pudo reproducir: ' + (error && error.name ? error.name : 'bloqueo del navegador'));
         }
       } else {
         audio.pause();
